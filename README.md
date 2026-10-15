@@ -44,6 +44,15 @@ product viewer and caches it in the browser. Free GPU time is limited per
 person per day; an optional Hugging Face token (saved only in the admin's
 browser) gives more.
 
+Photo models (`shop/photo3d.js`, admin tab "3D models", first card): for flat
+products (phones, tablets, TVs) the admin builds the model from real photos
+instead of AI. It starts with the product's 360° photos (front and back
+needed, sides optional), trims the background, and lays each photo on a
+rounded slab sized from the width you enter (thickness from a side photo).
+The photos are unlit so their colours match the product. Built in the
+browser in seconds, about 100–150 KB, no GPU limits; saved like the AI
+models (`engine: 'photo'`).
+
 Payments are manual: customers see the till/paybill number from
 `settings/shop` and the admin marks orders paid after checking M-Pesa.
 

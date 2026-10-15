@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generate, engines } from './g3d.js';
+import { buildPhotoModel } from './photo3d.js';
 
 const CHUNK = 900 * 1024, MAX_BYTES = 15 * 1024 * 1024, TOKEN_KEY = 'nonixHfToken';
 const mb = n => (n / 1048576).toFixed(1) + ' MB';
@@ -49,7 +50,7 @@ export function fixMaterials(root) {
     const hasColors = !!o.geometry.getAttribute('color');
     (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m && hasColors) { m.vertexColors = true; m.needsUpdate = true; } });
     const m = Array.isArray(o.material) ? o.material[0] : o.material;
-    if (!hasColors && !(m && m.map)) o.material = new THREE.MeshStandardMaterial({ color: 0x8a94a6, metalness: 0.4, roughness: 0.4 });
+    if (!hasColors && !(m && m.map) && !o.userData.keepMaterial) o.material = new THREE.MeshStandardMaterial({ color: 0x8a94a6, metalness: 0.4, roughness: 0.4 });
     if (!o.geometry.getAttribute('normal')) o.geometry.computeVertexNormals();
   });
 }
@@ -62,7 +63,7 @@ export async function saveModel(db, pid, engine, blob) {
   const ver = Date.now().toString(36), n = Math.ceil(u8.length / CHUNK), B = firebase.firestore.Blob;
   for (let i = 0; i < n; i++)
     await db.doc(`productModels/${pid}/chunks/${ver}_${pad(i)}`).set({ ver, i, data: B.fromUint8Array(u8.subarray(i * CHUNK, (i + 1) * CHUNK)) });
-  const meta = { ver, chunks: n, bytes: u8.length, engine, engineName: (engines[engine] || {}).name || engine, yaw: (engines[engine] || {}).yaw || 0 };
+  const meta = { ver, chunks: n, bytes: u8.length, engine, engineName: (engines[engine] || {}).name || (engine === 'photo' ? 'Photo model' : engine), yaw: (engines[engine] || {}).yaw || 0 };
   await db.doc('productModels/' + pid).set({ ...meta, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
   await db.doc('products/' + pid).set({ model3d: meta }, { merge: true }); // the shop reads this to know which chunks to load
   if (prev && prev.ver && prev.ver !== ver) await deleteChunks(db, pid, prev.ver, prev.chunks);
@@ -93,12 +94,25 @@ export async function show3d(app, { db, toast, esc }) {
     <div class="card list">
       <div class="grid">
         <label>Product<select id="m-pid">${products.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select></label>
-        <label>Photo angle<select id="m-angle"><option>Front</option><option>Back</option><option>Side</option></select></label>
       </div>
       <div id="m-current" class="muted"></div>
     </div>
     <div class="card list">
-      <b>1. Product photo</b>
+      <b>Photo model: phones, tablets, TVs</b>
+      <span class="muted">Built from real photos of each side, so it looks exactly like the product. Ready in seconds, no GPU limits. It starts with this product's 360° photos; click a box to use a different photo. Front and back are needed; side photos are optional. Photos work best on a plain background, with the product filling the frame.</span>
+      <div class="photos" id="pm-slots"></div>
+      <div class="grid">
+        <label>Width (mm)<input id="pm-w" type="number" min="20" max="2000" step="0.1" value="75"></label>
+        <label>Thickness (mm, blank = from side photo)<input id="pm-t" type="number" min="1" max="300" step="0.1"></label>
+        <label>Corner radius (mm)<input id="pm-r" type="number" min="0" max="300" step="0.5" value="8"></label>
+        <label>Side colour<span class="row"><input id="pm-c" type="color" value="#5b6578" style="height:42px;padding:4px;max-width:70px"><label class="muted" style="flex-direction:row;align-items:center;gap:6px"><input id="pm-auto" type="checkbox" checked style="width:auto"> From photos</label></span></label>
+      </div>
+      <div class="row"><button class="btn primary" id="pm-go" type="button">Build Photo Model</button><span class="muted" id="pm-note"></span></div>
+      <div id="pm-out"></div>
+    </div>
+    <div class="card list">
+      <b>AI model from one photo: other shapes</b>
+      <label style="max-width:220px">Photo angle<select id="m-angle"><option>Front</option><option>Back</option><option>Side</option></select></label>
       <span class="muted">Best results: one product, whole item in frame, plain background, good light. The engines remove the background themselves.</span>
       <label class="slot" style="max-width:220px;aspect-ratio:1"><div class="img" id="m-photo">＋</div><div class="lbl"><span id="m-photo-name">Choose photo</span></div>
         <input id="m-file" type="file" accept="image/*" hidden></label>
@@ -126,8 +140,51 @@ export async function show3d(app, { db, toast, esc }) {
       await deleteModel(db, p.id); delete p.model3d; toast('3D model removed'); showCurrent();
     };
   }
-  pidSel.onchange = () => { showCurrent(); renderCards(); };
-  showCurrent();
+  // ---------- Photo model ----------
+  const PM_SLOTS = [['front', 'Front *'], ['back', 'Back *'], ['left', 'Left side'], ['right', 'Right side']];
+  let pmPhotos = {}, pmResult = null;
+  const drawPmSlots = () => {
+    $('pm-slots').innerHTML = PM_SLOTS.map(([k, l]) => `<label class="slot"><input type="file" accept="image/*" data-pm="${k}" hidden>
+      <div class="img" style="${pmPhotos[k] ? `background-image:url('${esc(pmPhotos[k])}')` : ''}">${pmPhotos[k] ? '' : '+'}</div>
+      <div class="lbl"><span>${l}</span>${pmPhotos[k] ? `<button type="button" data-pm-clear="${k}">Remove</button>` : ''}</div></label>`).join('');
+  };
+  async function loadPmPhotos() {
+    pmResult = null; $('pm-out').innerHTML = ''; $('pm-note').textContent = '';
+    const ph = await db.doc('productPhotos/' + pidSel.value).get().then(d => d.exists ? d.data() : {}).catch(() => ({}));
+    pmPhotos = {}; PM_SLOTS.forEach(([k]) => { if (typeof ph[k] === 'string') pmPhotos[k] = ph[k]; });
+    drawPmSlots();
+  }
+  $('pm-slots').onchange = e => {
+    const k = e.target.dataset.pm, f = e.target.files[0]; if (!k || !f) return;
+    if (!/^image\//.test(f.type)) { toast('Please choose an image file'); return; }
+    pmPhotos[k] = URL.createObjectURL(f); drawPmSlots();
+  };
+  $('pm-slots').onclick = e => { const k = e.target.dataset.pmClear; if (k) { e.preventDefault(); delete pmPhotos[k]; drawPmSlots(); } };
+  $('pm-c').oninput = () => { $('pm-auto').checked = false; };
+  $('pm-go').onclick = async () => {
+    const btn = $('pm-go'), note = $('pm-note'); btn.disabled = true; note.textContent = 'Building…';
+    try {
+      const r = await buildPhotoModel(pmPhotos, { widthMm: $('pm-w').value, thicknessMm: $('pm-t').value, radiusMm: $('pm-r').value, colour: $('pm-auto').checked ? '' : $('pm-c').value });
+      $('pm-c').value = r.colour;
+      pmResult = { ...r, buf: await r.blob.arrayBuffer(), href: URL.createObjectURL(r.blob) };
+      note.textContent = '';
+      $('pm-out').innerHTML = `<div style="height:320px;max-width:520px;border:1px solid var(--line);border-radius:12px;position:relative;overflow:hidden"></div>
+        <div class="row" style="margin-top:8px"><span class="muted grow">${mb(r.bytes)} · ${r.sizeMm.join(' × ')} mm</span>
+        <a class="btn" style="display:inline-grid;place-items:center;text-decoration:none" download="${esc(pidSel.value)}-photo.glb" href="${pmResult.href}">Download .glb</a>
+        <button class="btn primary" id="pm-use" type="button">Use This Model</button></div>`;
+      viewer($('pm-out').firstElementChild, pmResult.buf);
+      $('pm-use').onclick = async () => {
+        const p = products.find(x => x.id === pidSel.value), b = $('pm-use'); b.disabled = true; b.textContent = 'Saving…';
+        try { p.model3d = await saveModel(db, p.id, 'photo', pmResult.blob); toast('Photo model saved for ' + p.name); showCurrent(); }
+        catch (err) { toast('Could not save: ' + err.message); }
+        b.disabled = false; b.textContent = 'Use This Model';
+      };
+    } catch (err) { note.textContent = ''; $('pm-out').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+    btn.disabled = false;
+  };
+
+  pidSel.onchange = () => { showCurrent(); renderCards(); loadPmPhotos(); };
+  showCurrent(); loadPmPhotos();
 
   $('m-file').onchange = e => {
     const f = e.target.files[0]; if (!f) return;

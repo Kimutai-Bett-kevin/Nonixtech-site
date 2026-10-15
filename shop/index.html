@@ -952,6 +952,7 @@ class Component extends DCLogic {
             root.traverse(o => { if (!o.isMesh) return; const hasC = !!o.geometry.getAttribute('color'), m0 = Array.isArray(o.material) ? o.material[0] : o.material;
               if (hasC) { textured = true; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.vertexColors = true; m.needsUpdate = true; }); }
               else if (m0 && m0.map) textured = true;
+              else if (o.userData.keepMaterial) textured = true; // photo model's body: keep its colour
               else o.material = mk(0x5b6578, { m: 0.55, r: 0.38 });
               if (!o.geometry.getAttribute('normal')) o.geometry.computeVertexNormals(); });
             if (textured && T.RoomEnvironment) { const pm = new T.PMREMGenerator(renderer); scene.environment = pm.fromScene(new T.RoomEnvironment(), 0.04).texture; }
