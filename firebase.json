@@ -5,7 +5,9 @@
     "location": "africa-south1"
   },
   "auth": {
-    "providers": { "emailPassword": true }
+    "providers": {
+      "emailPassword": true
+    }
   },
   "hosting": {
     "public": ".",
@@ -20,8 +22,24 @@
     "cleanUrls": true,
     "trailingSlashBehavior": "REMOVE",
     "headers": [
-      { "source": "**/*.@(webp|png|jpg|jpeg|svg)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800, immutable" }] },
-      { "source": "**/*.@(html)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }] }
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(webp|png|jpg|jpeg|svg)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=604800, immutable"
+          }
+        ]
+      }
     ]
   }
 }
