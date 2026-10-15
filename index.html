@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14;color:#E8ECF1;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+a{color:#34D9A3;text-decoration:none}
+a:hover{color:#7FF0C6}
+@keyframes nx-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,217,163,.5)}50%{opacity:.55;box-shadow:0 0 0 7px rgba(52,217,163,0)}}
+@keyframes nx-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+</style>
+</helmet>
+
+<template id="__bundler_thumbnail">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0A0E14"/><circle cx="26" cy="50" r="6" fill="#34D9A3"/><text x="40" y="57" font-family="Space Grotesk,sans-serif" font-size="20" font-weight="700" fill="#E8ECF1">NT</text></svg>
+</template>
+
+<div aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none">
+  <img data-nx="img/custom-software.webp" src="img/custom-software.webp" alt="">
+  <img data-nx="img/web-dev.webp" src="img/web-dev.webp" alt="">
+  <img data-nx="img/consultancy.webp" src="img/consultancy.webp" alt="">
+  <img data-nx="img/server-mgt.webp" src="img/server-mgt.webp" alt="">
+  <img data-nx="img/security.webp" src="img/security.webp" alt="">
+  <img data-nx="img/data-services.webp" src="img/data-services.webp" alt="">
+  <img data-nx="img/ai-solutions.webp" src="img/ai-solutions.webp" alt="">
+  <img data-nx="img/pos-sales.webp" src="img/pos-sales.webp" alt="">
+</div>
+
+<div style="background:#0A0E14;min-height:100vh;overflow-x:hidden">
+
+<header style="position:sticky;top:0;z-index:60;background:rgba(10,14,20,.88);backdrop-filter:blur(14px);border-bottom:1px solid #1B2233">
+  <div style="max-width:1200px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:70px;gap:24px">
+    <a href="#top" style="display:flex;align-items:center;gap:9px;color:#E8ECF1;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;letter-spacing:.01em">
+      <span style="width:9px;height:9px;border-radius:50%;background:#34D9A3;box-shadow:0 0 10px #34D9A3;animation:nx-pulse 2.4s infinite"></span>NONIXTECH
+    </a>
+    <nav style="display:flex;gap:30px;font-size:14px;color:#8A94AC">
+      <a href="#services" style="color:#8A94AC" style-hover="color:#E8ECF1">Services</a>
+      <a href="#onsite" style="color:#8A94AC" style-hover="color:#E8ECF1">On site</a>
+      <a href="#work" style="color:#8A94AC" style-hover="color:#E8ECF1">Work</a>
+      <a href="#voices" style="color:#8A94AC" style-hover="color:#E8ECF1">Clients</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:14px">
+      <a href="tel:+254724171555" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#8A94AC;letter-spacing:.04em" style-hover="color:#34D9A3">+254 724 171 555</a>
+      <a href="#contact" style="background:#F5A623;color:#1A1204;font-weight:600;font-size:14px;padding:11px 20px;border-radius:7px" style-hover="background:#FFB945">Book a free site visit</a>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section id="top" style="max-width:1200px;margin:0 auto;padding:72px 28px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:56px;align-items:center">
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;color:#34D9A3;margin-bottom:22px">
+      <span style="width:22px;height:1px;background:#34D9A3;display:block"></span>SYSTEMS THAT DON'T GO DOWN
+    </div>
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:clamp(38px,4.4vw,60px);line-height:1.04;letter-spacing:-.025em;font-weight:600;margin:0 0 22px;text-wrap:pretty">
+      The technology team<br>Kenyan businesses<br><span style="color:#34D9A3">stop worrying about.</span>
+    </h1>
+    <p style="font-size:17.5px;line-height:1.6;color:#8A94AC;margin:0 0 32px;max-width:500px;text-wrap:pretty">
+      Software, networks, CCTV and support — one team, end to end. We install it, we run it, and we pick up the phone when something breaks.
+    </p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:36px">
+      <a href="#contact" style="background:#F5A623;color:#1A1204;font-weight:600;font-size:15.5px;padding:15px 26px;border-radius:8px;display:inline-flex;align-items:center;gap:9px;box-shadow:0 8px 26px rgba(245,166,35,.18)" style-hover="background:#FFB945;transform:translateY(-2px)">Book a free site visit <span>→</span></a>
+      <a href="#work" style="border:1px solid #2A3348;color:#E8ECF1;padding:15px 26px;border-radius:8px;font-size:15.5px" style-hover="border-color:#34D9A3;color:#34D9A3">See live client systems</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;border-top:1px solid #1B2233;padding-top:26px;max-width:520px">
+      <div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:600;color:#E8ECF1">Same day</div>
+        <div style="font-size:12.5px;color:#8A94AC;line-height:1.4;margin-top:4px">Response on support calls</div>
+      </div>
+      <div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:600;color:#E8ECF1">8</div>
+        <div style="font-size:12.5px;color:#8A94AC;line-height:1.4;margin-top:4px">Disciplines under one roof</div>
+      </div>
+      <div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:600;color:#E8ECF1">100%</div>
+        <div style="font-size:12.5px;color:#8A94AC;line-height:1.4;margin-top:4px">Of our builds still maintained</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:relative">
+    <div style="position:relative;width:100%;height:560px;border-radius:16px;overflow:hidden;border:1px solid #232B3D;background:#121826">
+      <img src="img/server-mgt.webp" alt="NonixTech engineer patching a network rack on site" style="width:100%;height:100%;object-fit:cover;object-position:35% center;display:block">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,14,20,.35) 0%,transparent 35%,rgba(10,14,20,.55) 100%);pointer-events:none"></div>
+    </div>
+    <div style="position:absolute;left:-28px;bottom:34px;width:290px;background:rgba(18,24,38,.94);backdrop-filter:blur(10px);border:1px solid #2A3348;border-radius:12px;padding:16px 18px;box-shadow:0 20px 50px rgba(0,0,0,.5)">
+      <div style="display:flex;align-items:center;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A94AC;margin-bottom:12px">
+        <span>UPTIME MONITOR</span>
+        <span style="display:flex;align-items:center;gap:6px;color:#34D9A3"><span style="width:6px;height:6px;border-radius:50%;background:#34D9A3;animation:nx-pulse 2s infinite;display:block"></span>LIVE</span>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:3px;height:44px;margin-bottom:12px">
+        <span style="flex:1;height:62%;background:#34D9A3;opacity:.35;border-radius:2px;display:block"></span>
+        <span style="flex:1;height:78%;background:#34D9A3;opacity:.45;border-radius:2px;display:block"></span>
+        <span style="flex:1;height:55%;background:#34D9A3;opacity:.35;border-radius:2px;display:block"></span>
+        <span style="flex:1;height:90%;background:#34D9A3;opacity:.6;border-radius:2px;display:block"></span>
+        <span style="flex:1;height:70%;background:#34D9A3;opacity:.45;border-radius:2px;display:block"></span>
+        <span style="flex:1;height:100%;background:#34D9A3;border-radius:2px;display:block"></span>
+        <span style="flex:1;height:84%;background:#34D9A3;opacity:.6;border-radius:2px;display:block"></span>
+        <span style="flex:1;height:66%;background:#34D9A3;opacity:.4;border-radius:2px;display:block"></span>
+        <span style="flex:1;height:92%;background:#34D9A3;opacity:.7;border-radius:2px;display:block"></span>
+        <span style="flex:1;height:74%;background:#34D9A3;opacity:.5;border-radius:2px;display:block"></span>
+      </div>
+      <div style="font-size:13px;color:#E8ECF1;font-weight:600">6 client sites operational</div>
+      <div style="font-size:11.5px;color:#8A94AC;margin-top:2px">Checked every 60 seconds</div>
+    </div>
+  </div>
+</section>
+
+<!-- CLIENT STRIP -->
+<section style="margin-top:72px;border-top:1px solid #1B2233;border-bottom:1px solid #1B2233;background:#0C1119;overflow:hidden;padding:20px 0">
+  <div style="display:flex;align-items:center;gap:20px;max-width:1200px;margin:0 auto;padding:0 28px">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#5F6A82;white-space:nowrap">TRUSTED ON SITE BY</span>
+    <div style="flex:1;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)">
+      <div style="display:flex;gap:48px;width:max-content;animation:nx-marquee 28s linear infinite;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:500;color:#6D778E;white-space:nowrap">
+        <span>Brightmart Supermarket</span><span>Kuskong Bookshop</span><span>Analat High School</span><span>Amonhub Restaurant</span><span>Happy Church City Centre</span><span>T-Bone Kamah</span>
+        <span>Brightmart Supermarket</span><span>Kuskong Bookshop</span><span>Analat High School</span><span>Amonhub Restaurant</span><span>Happy Church City Centre</span><span>T-Bone Kamah</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALUE PROP -->
+<section style="max-width:1200px;margin:0 auto;padding:96px 28px 0">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px">
+    <div style="background:#121826;border:1px solid #232B3D;border-radius:14px;padding:30px 28px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#F5A623;letter-spacing:.1em;margin-bottom:16px">01 / NO HANDOFFS</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;margin:0 0 10px">One team, cable to cloud</h3>
+      <p style="font-size:14.5px;line-height:1.6;color:#8A94AC;margin:0">The same people who write your software run the cable and configure the server. Nobody to blame, nobody to chase.</p>
+    </div>
+    <div style="background:#121826;border:1px solid #232B3D;border-radius:14px;padding:30px 28px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#F5A623;letter-spacing:.1em;margin-bottom:16px">02 / WE STAY</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;margin:0 0 10px">Support after launch day</h3>
+      <p style="font-size:14.5px;line-height:1.6;color:#8A94AC;margin:0">Every system we've built is still under our maintenance. Monitoring, patches, and a phone that gets answered.</p>
+    </div>
+    <div style="background:#121826;border:1px solid #232B3D;border-radius:14px;padding:30px 28px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#F5A623;letter-spacing:.1em;margin-bottom:16px">03 / BUILT FOR HERE</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;margin:0 0 10px">Works on Kenyan reality</h3>
+      <p style="font-size:14.5px;line-height:1.6;color:#8A94AC;margin:0">Power cuts, patchy links, M-Pesa. Systems designed to keep trading when the conditions aren't ideal.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services" style="max-width:1200px;margin:0 auto;padding:96px 28px 0">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin-bottom:40px;flex-wrap:wrap">
+    <div style="max-width:620px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;color:#34D9A3;margin-bottom:14px">WHAT WE DO</div>
+      <h2 style="font-family:'Space Grotesk',sans-serif;font-size:40px;line-height:1.1;letter-spacing:-.02em;font-weight:600;margin:0 0 12px">Eight disciplines, one invoice</h2>
+      <p style="font-size:16px;line-height:1.6;color:#8A94AC;margin:0">Pick a service to see what it looks like on the ground.</p>
+    </div>
+    <a href="#contact" style="font-size:14.5px;color:#34D9A3;border-bottom:1px solid rgba(52,217,163,.4);padding-bottom:3px">Ask about a bundled retainer →</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:stretch">
+    <div style="display:flex;flex-direction:column;gap:1px;background:#1E263A;border:1px solid #232B3D;border-radius:14px;overflow:hidden">
+      <sc-for list="{{ services }}" as="s" hint-placeholder-count="8">
+        <button type="button" onClick="{{ s.select }}" style="{{ s.tabStyle }}">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#F5A623;letter-spacing:.08em">{{ s.num }}</span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-size:15.5px;font-weight:500;flex:1;text-align:left">{{ s.title }}</span>
+          <span style="{{ s.arrowStyle }}">→</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="background:#121826;border:1px solid #232B3D;border-radius:14px;overflow:hidden;display:grid;grid-template-rows:1fr auto;min-height:440px">
+      <div style="position:relative;min-height:240px">
+        <img src="{{ activeImg }}" alt="{{ activeTitle }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
+      </div>
+      <div style="padding:26px 30px;border-top:1px solid #232B3D">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:#34D9A3;margin-bottom:10px">{{ activeTag }}</div>
+        <h3 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;margin:0 0 10px">{{ activeTitle }}</h3>
+        <p style="font-size:15px;line-height:1.65;color:#8A94AC;margin:0 0 18px;max-width:620px">{{ activeBody }}</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <sc-for list="{{ activeChips }}" as="c" hint-placeholder-count="3">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8A94AC;border:1px solid #2A3348;border-radius:20px;padding:6px 12px;letter-spacing:.05em">{{ c }}</span>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ON SITE -->
+<section id="onsite" style="max-width:1200px;margin:0 auto;padding:96px 28px 0">
+  <div style="max-width:640px;margin-bottom:40px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;color:#34D9A3;margin-bottom:14px">BOOTS ON THE GROUND</div>
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:40px;line-height:1.1;letter-spacing:-.02em;font-weight:600;margin:0 0 12px">Behind the software, real cable and hardware</h2>
+    <p style="font-size:16px;line-height:1.6;color:#8A94AC;margin:0">Every login screen sits on top of physical work — wiring pulled, racks configured, ports tested.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:1.4fr 1fr;grid-template-rows:260px 260px;gap:20px">
+    <div style="grid-row:span 2;position:relative;border-radius:14px;overflow:hidden;border:1px solid #232B3D;background:#121826">
+      <img src="img/server-mgt.webp" alt="Structured cabling being terminated in a rack" style="width:100%;height:100%;object-fit:cover;object-position:20% center;display:block">
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:26px 28px 24px;background:linear-gradient(0deg,rgba(10,14,20,.92),transparent);pointer-events:none">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#F5A623;letter-spacing:.1em;margin-bottom:8px">NETWORKING &amp; INFRASTRUCTURE</div>
+        <h3 style="font-family:'Space Grotesk',sans-serif;font-size:23px;font-weight:600;margin:0 0 6px">Structured cabling</h3>
+        <p style="font-size:14px;color:#B4BCCC;margin:0;max-width:420px;line-height:1.55">Cat6 runs pulled, terminated and tested to a wall port that works the first time — and in a year.</p>
+      </div>
+    </div>
+    <div style="position:relative;border-radius:14px;overflow:hidden;border:1px solid #232B3D;background:#121826">
+      <img src="img/security.webp" alt="Security operations desk with live monitoring dashboards" style="width:100%;height:100%;object-fit:cover;display:block">
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:22px 24px;background:linear-gradient(0deg,rgba(10,14,20,.92),transparent);pointer-events:none">
+        <h3 style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;margin:0 0 4px">Rack &amp; server installation</h3>
+        <p style="font-size:13px;color:#B4BCCC;margin:0;line-height:1.5">Switches patched, cable management the next engineer can read.</p>
+      </div>
+    </div>
+    <div style="position:relative;border-radius:14px;overflow:hidden;border:1px solid #232B3D;background:#121826">
+      <img src="img/pos-sales.webp" alt="Staff serving a customer at a NonixTech point-of-sale terminal" style="width:100%;height:100%;object-fit:cover;object-position:center 40%;display:block">
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:22px 24px;background:linear-gradient(0deg,rgba(10,14,20,.92),transparent);pointer-events:none">
+        <h3 style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;margin:0 0 4px">CCTV &amp; POS on the floor</h3>
+        <p style="font-size:13px;color:#B4BCCC;margin:0;line-height:1.5">Cameras aimed where losses happen, tills that never hold the queue.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WORK -->
+<section id="work" style="max-width:1200px;margin:0 auto;padding:96px 28px 0">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:32px;margin-bottom:32px;flex-wrap:wrap">
+    <div style="max-width:600px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;color:#34D9A3;margin-bottom:14px">PROOF, NOT PROMISES</div>
+      <h2 style="font-family:'Space Grotesk',sans-serif;font-size:40px;line-height:1.1;letter-spacing:-.02em;font-weight:600;margin:0 0 12px">Systems we still run today</h2>
+      <p style="font-size:16px;line-height:1.6;color:#8A94AC;margin:0">Every project below is live and under maintenance.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+        <button type="button" onClick="{{ f.select }}" style="{{ f.style }}">{{ f.label }}</button>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+    <sc-for list="{{ visibleProjects }}" as="p" hint-placeholder-count="6">
+      <div style="{{ p.cardStyle }}">
+        <div style="position:relative;height:190px;border-bottom:1px solid #232B3D">
+          <img src="{{ p.img }}" alt="{{ p.name }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
+          <div style="position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:6px;background:rgba(10,14,20,.8);backdrop-filter:blur(6px);border:1px solid rgba(52,217,163,.35);border-radius:20px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;color:#34D9A3;pointer-events:none">
+            <span style="width:5px;height:5px;border-radius:50%;background:#34D9A3;display:block;animation:nx-pulse 2s infinite"></span>{{ p.status }}
+          </div>
+        </div>
+        <div style="padding:22px 24px 24px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A94AC;margin-bottom:9px">{{ p.sector }}</div>
+          <h3 style="font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;margin:0 0 8px">{{ p.name }}</h3>
+          <p style="font-size:14px;line-height:1.55;color:#8A94AC;margin:0 0 14px">{{ p.blurb }}</p>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#5F6A82;letter-spacing:.06em;border-top:1px solid #1E263A;padding-top:12px">{{ p.stack }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<!-- VOICES -->
+<section id="voices" style="max-width:1200px;margin:0 auto;padding:96px 28px 0">
+  <div style="background:#121826;border:1px solid #232B3D;border-radius:16px;overflow:hidden;display:grid;grid-template-columns:.8fr 1.2fr">
+    <div style="position:relative;min-height:400px;border-right:1px solid #232B3D">
+      <img src="{{ quoteImg }}" alt="{{ quoteRole }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
+    </div>
+    <div style="padding:52px 48px;display:flex;flex-direction:column;justify-content:center">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:52px;color:#F5A623;line-height:.4;margin-bottom:22px">&ldquo;</div>
+      <p style="font-family:'Space Grotesk',sans-serif;font-size:25px;line-height:1.45;font-weight:500;margin:0 0 28px;text-wrap:pretty">{{ quoteText }}</p>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px">
+        <span style="width:40px;height:40px;border-radius:50%;background:#182036;border:1px solid #2A3348;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:#34D9A3">{{ quoteInitials }}</span>
+        <div>
+          <div style="font-size:14.5px;font-weight:600">{{ quoteName }}</div>
+          <div style="font-size:13px;color:#8A94AC">{{ quoteRole }}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <button type="button" onClick="{{ prevQuote }}" style="width:38px;height:38px;border-radius:50%;border:1px solid #2A3348;background:transparent;color:#E8ECF1;cursor:pointer;font-size:15px" style-hover="border-color:#34D9A3;color:#34D9A3">←</button>
+        <button type="button" onClick="{{ nextQuote }}" style="width:38px;height:38px;border-radius:50%;border:1px solid #2A3348;background:transparent;color:#E8ECF1;cursor:pointer;font-size:15px" style-hover="border-color:#34D9A3;color:#34D9A3">→</button>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#5F6A82;letter-spacing:.08em">{{ quoteCounter }}</span>
+      </div>
+    </div>
+  </div>
+  <p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5F6A82;margin:14px 0 0;letter-spacing:.05em">NOTE: placeholder quotes — replace with real client words before launch.</p>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" style="max-width:1200px;margin:0 auto;padding:96px 28px 0">
+  <div style="border:1px solid #232B3D;border-radius:16px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;background:#0F141F">
+    <div style="padding:56px 48px;background-image:radial-gradient(ellipse 80% 100% at 0% 0%,rgba(52,217,163,.10),transparent)">
+      <h2 style="font-family:'Space Grotesk',sans-serif;font-size:36px;line-height:1.1;letter-spacing:-.02em;font-weight:600;margin:0 0 14px;text-wrap:pretty">Free site visit. No obligation.</h2>
+      <p style="font-size:16px;line-height:1.6;color:#8A94AC;margin:0 0 32px;max-width:420px">Tell us what keeps breaking. We'll come look, tell you what it needs, and quote in writing — usually within a day.</p>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <a href="tel:+254724171555" style="display:flex;align-items:center;gap:12px;color:#E8ECF1;font-size:15.5px" style-hover="color:#34D9A3"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5F6A82;width:56px;letter-spacing:.08em">CALL</span>+254 724 171 555</a>
+        <a href="mailto:info@nonixtech.co.ke" style="display:flex;align-items:center;gap:12px;color:#E8ECF1;font-size:15.5px" style-hover="color:#34D9A3"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5F6A82;width:56px;letter-spacing:.08em">EMAIL</span>info@nonixtech.co.ke</a>
+        <div style="display:flex;align-items:center;gap:12px;color:#8A94AC;font-size:15.5px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5F6A82;width:56px;letter-spacing:.08em">HOURS</span>Mon–Sat, 8am–6pm EAT</div>
+      </div>
+    </div>
+    <div style="padding:48px;border-left:1px solid #232B3D;background:#121826">
+      <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;justify-content:center;height:100%;min-height:300px">
+          <div style="width:46px;height:46px;border-radius:50%;background:rgba(52,217,163,.14);border:1px solid #34D9A3;color:#34D9A3;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:20px">✓</div>
+          <h3 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;margin:0 0 10px">Request received</h3>
+          <p style="font-size:15px;color:#8A94AC;line-height:1.6;margin:0 0 22px">We'll call you back on the number you gave — same day if it's before 4pm.</p>
+          <button type="button" onClick="{{ resetForm }}" style="align-self:flex-start;border:1px solid #2A3348;background:transparent;color:#E8ECF1;padding:11px 20px;border-radius:7px;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif" style-hover="border-color:#34D9A3;color:#34D9A3">Send another</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div>
+            <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A94AC;margin-bottom:7px">BUSINESS NAME</label>
+            <input value="{{ fBusiness }}" onChange="{{ setBusiness }}" placeholder="Brightmart Supermarket" style="{{ inputStyle }}">
+          </div>
+          <div>
+            <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A94AC;margin-bottom:7px">PHONE</label>
+            <input value="{{ fPhone }}" onChange="{{ setPhone }}" placeholder="07xx xxx xxx" style="{{ phoneStyle }}">
+            <sc-if value="{{ phoneError }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:12px;color:#F5A623;margin-top:6px">Add a phone number we can reach you on.</div>
+            </sc-if>
+          </div>
+          <div>
+            <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A94AC;margin-bottom:7px">WHAT DO YOU NEED?</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-for list="{{ needs }}" as="n" hint-placeholder-count="6">
+                <button type="button" onClick="{{ n.toggle }}" style="{{ n.style }}">{{ n.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div>
+            <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#8A94AC;margin-bottom:7px">WHAT'S GOING WRONG? (OPTIONAL)</label>
+            <textarea value="{{ fNote }}" onChange="{{ setNote }}" rows="3" placeholder="Till freezes at peak hours, WiFi drops in the back office…" style="{{ areaStyle }}"></textarea>
+          </div>
+          <button type="button" onClick="{{ submit }}" style="background:#F5A623;color:#1A1204;font-weight:600;font-size:15.5px;padding:15px 24px;border:none;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px" style-hover="background:#FFB945">Request my free site visit</button>
+          <p style="font-size:12px;color:#5F6A82;margin:0;line-height:1.5">We only use your details to get back to you about this request.</p>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</section>
+
+<footer style="margin-top:96px;border-top:1px solid #1B2233;padding:56px 0 34px">
+  <div style="max-width:1200px;margin:0 auto;padding:0 28px">
+    <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:36px;margin-bottom:44px">
+      <div>
+        <div style="display:flex;align-items:center;gap:9px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;margin-bottom:14px"><span style="width:9px;height:9px;border-radius:50%;background:#34D9A3;box-shadow:0 0 10px #34D9A3"></span>NONIXTECH</div>
+        <p style="font-size:14px;color:#8A94AC;max-width:270px;line-height:1.6;margin:0">Software, infrastructure and support for Kenyan businesses — end to end, and we stay after launch.</p>
+      </div>
+      <div>
+        <h4 style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:#5F6A82;margin:0 0 16px;font-weight:400">SERVICES</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:14px">
+          <a href="#services" style="color:#B4BCCC" style-hover="color:#34D9A3">Software Development</a>
+          <a href="#services" style="color:#B4BCCC" style-hover="color:#34D9A3">Networking &amp; Infrastructure</a>
+          <a href="#services" style="color:#B4BCCC" style-hover="color:#34D9A3">Security Systems</a>
+          <a href="#services" style="color:#B4BCCC" style-hover="color:#34D9A3">Data &amp; AI</a>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:#5F6A82;margin:0 0 16px;font-weight:400">COMPANY</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:14px">
+          <a href="#work" style="color:#B4BCCC" style-hover="color:#34D9A3">Our work</a>
+          <a href="#onsite" style="color:#B4BCCC" style-hover="color:#34D9A3">On site</a>
+          <a href="#voices" style="color:#B4BCCC" style-hover="color:#34D9A3">Clients</a>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:#5F6A82;margin:0 0 16px;font-weight:400">CONTACT</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:14px">
+          <a href="mailto:info@nonixtech.co.ke" style="color:#B4BCCC" style-hover="color:#34D9A3">info@nonixtech.co.ke</a>
+          <a href="tel:+254724171555" style="color:#B4BCCC" style-hover="color:#34D9A3">+254 724 171 555</a>
+          <span style="color:#8A94AC">nonixtech.co.ke</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-top:1px solid #1B2233;padding-top:26px;font-size:13px;color:#5F6A82">
+      <span>© 2026 NonixTech. All rights reserved.</span>
+      <span style="font-family:'JetBrains Mono',monospace;letter-spacing:.08em">STATUS: ALL SYSTEMS OPERATIONAL</span>
+    </div>
+  </div>
+</footer>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const SERVICES = [
+  {num:'01', title:'Software Development', tag:'CUSTOM SOFTWARE', img:'img/custom-software.webp',
+   hint:'Drop photo — staff using your POS / custom system at a counter',
+   body:'Business software built around how your team actually works: point-of-sale, clinic and hospital systems, stock and reporting tools. Buy it outright or lease it monthly.',
+   chips:['POS SYSTEMS','CLINIC & HOSPITAL','STOCK & REPORTING','SOFTWARE LEASING']},
+  {num:'02', title:'Web Development', tag:'WEB & APPS', img:'img/web-dev.webp',
+   hint:'Drop photo — a client site open on laptop and phone',
+   body:'Websites and web apps built to get used: fast on a Kenyan connection, mobile-first, and easy for your own staff to update without calling us.',
+   chips:['WEBSITES','WEB APPS','CMS','PAYMENTS & M-PESA']},
+  {num:'03', title:'IT Support & Consultancy', tag:'SUPPORT RETAINERS', img:'img/consultancy.webp',
+   hint:'Drop photo — technician helping staff at their desk',
+   body:'On-site and remote support on a monthly retainer, plus straight advice on what to buy and what to skip before you spend the money.',
+   chips:['ON-SITE VISITS','REMOTE SUPPORT','IT STRATEGY','PROCUREMENT ADVICE']},
+  {num:'04', title:'Networking & Infrastructure', tag:'NETWORKS & SERVERS', img:'img/server-mgt.webp',
+   hint:'Drop photo — WiFi access point or switch being installed',
+   body:'WiFi that reaches the back office, switching that holds up at peak, servers installed and maintained. Cabling documented so the next visit is quick.',
+   chips:['WIFI INSTALLATION','STRUCTURED CABLING','SERVERS','NETWORK MONITORING']},
+  {num:'05', title:'Security Systems', tag:'CCTV & ACCESS', img:'img/security.webp',
+   hint:'Drop photo — CCTV camera or monitoring screens',
+   body:'CCTV specified, installed and monitored for retail floors, restaurants and school compounds — cameras aimed where losses actually happen.',
+   chips:['CCTV INSTALLATION','REMOTE MONITORING','ACCESS CONTROL','SITE SURVEYS']},
+  {num:'06', title:'Data Services', tag:'DATA ENGINEERING', img:'img/data-services.webp',
+   hint:'Drop photo — dashboard or reporting screen in use',
+   body:'Migration off spreadsheets and legacy systems, then dashboards and automation so the numbers you run the business on arrive on their own.',
+   chips:['MIGRATION','DASHBOARDS','AUTOMATION','DATA ENGINEERING']},
+  {num:'07', title:'AI Solutions', tag:'PRACTICAL AI', img:'img/ai-solutions.webp',
+   hint:'Drop photo — team reviewing an AI-assisted workflow',
+   body:'Practical AI inside the systems you already run: sorting enquiries, drafting replies, flagging stock and cash anomalies. No science projects.',
+   chips:['WORKFLOW AUTOMATION','CHAT & ENQUIRIES','FORECASTING','ANOMALY FLAGS']},
+  {num:'08', title:'Business & Brand Solutions', tag:'BRAND & PLANNING', img:'img/pos-sales.webp',
+   hint:'Drop photo — branded signage, uniforms or printed material',
+   body:'Business plans, branding and marketing for owners who need the story to match the systems — often the piece missing when funding is on the line.',
+   chips:['BUSINESS PLANS','BRANDING','MARKETING','OFFICE TECH CONSULTANCY']}
+];
+
+const PROJECTS = [
+  {name:'Brightmart Supermarket', sector:'RETAIL', img:'img/pos-sales.webp', status:'LIVE',
+   blurb:'POS across every till, store network, and CCTV coverage of the floor and store room.',
+   stack:'POS · NETWORK · CCTV', hint:'Drop photo — Brightmart shop floor or till'},
+  {name:'Kuskong Bookshop', sector:'RETAIL', img:'img/custom-software.webp', status:'LIVE',
+   blurb:'Custom stock and sales software with an ongoing support retainer.',
+   stack:'SOFTWARE · SUPPORT', hint:'Drop photo — Kuskong counter or shelves'},
+  {name:'Analat High School', sector:'EDUCATION', img:'img/server-mgt.webp', status:'LIVE',
+   blurb:'Campus-wide network with monitoring, so a dead link is spotted before a class is.',
+   stack:'NETWORK · MONITORING', hint:'Drop photo — school computer lab or campus'},
+  {name:'Amonhub Restaurant', sector:'HOSPITALITY', img:'img/consultancy.webp', status:'LIVE',
+   blurb:'System administration: servers, accounts and day-to-day IT kept running for the team.',
+   stack:'SYSTEM ADMINISTRATION'},
+  {name:'Happy Church City Centre', sector:'MINISTRY', img:'img/web-dev.webp', status:'LIVE',
+   blurb:'Website with a Firestore-backed CMS the team updates themselves each week.',
+   stack:'WEB · CMS', hint:'Drop photo — church service or media desk'},
+  {name:'T-Bone Kamah', sector:'MINISTRY', img:'img/web-dev.webp', status:'LIVE',
+   blurb:'Website with integrated payments for giving and event registration.',
+   stack:'WEB · PAYMENTS', hint:'Drop photo — event, stage or ministry team'}
+];
+
+const QUOTES = [
+  {text:'Placeholder — ask Brightmart for one line about the tills and CCTV going in without closing the shop.',
+   name:'Client name', role:'Owner — Brightmart Supermarket', initials:'BM', img:'img/consultancy.webp',
+   hint:'Drop photo — Brightmart owner on the shop floor'},
+  {text:'Placeholder — ask Analat for one line about the campus network and how support calls get answered.',
+   name:'Client name', role:'ICT lead — Analat High School', initials:'AS', img:'img/server-mgt.webp',
+   hint:'Drop photo — Analat ICT lead in the lab'},
+  {text:'Placeholder — ask Amonhub for one line about how system administration is handled for them.',
+   name:'Client name', role:'Manager — Amonhub Restaurant', initials:'AH', img:'img/consultancy.webp'}
+];
+
+const NEEDS = ['POS / Software','Networking & WiFi','CCTV','IT support retainer','Website','Data & AI'];
+const FILTERS = ['All','Retail','Education','Hospitality','Ministry'];
+
+class Component extends DCLogic {
+  state = {svc:0, filter:'All', quote:0, business:'', phone:'', note:'', needs:[], sent:false, phoneError:false};
+
+  componentDidMount() { this.forceUpdate(); }
+
+  // In the offline single-file bundle, static srcs are inlined as data URIs but
+  // JS-assigned ones are not — resolve through the hidden preload tags.
+  src(p) {
+    if (!p) return '';
+    const el = typeof document !== 'undefined' && document.querySelector('img[data-nx="' + p + '"]');
+    return (el && el.currentSrc) || p;
+  }
+
+  input(err) {
+    return 'width:100%;background:#0E1420;border:1px solid ' + (err ? '#F5A623' : '#2A3348') +
+      ';border-radius:8px;padding:13px 14px;color:#E8ECF1;font-size:15px;font-family:Inter,sans-serif;outline:none';
+  }
+
+  renderVals() {
+    const s = SERVICES[this.state.svc];
+    const q = QUOTES[this.state.quote];
+    const f = this.state.filter;
+    return {
+      services: SERVICES.map((sv, i) => ({
+        num: sv.num, title: sv.title,
+        select: () => this.setState({svc: i}),
+        tabStyle: 'display:flex;align-items:center;gap:12px;padding:17px 20px;border:none;cursor:pointer;font-family:Inter,sans-serif;text-align:left;background:' +
+          (i === this.state.svc ? '#182036' : '#121826') + ';color:' + (i === this.state.svc ? '#E8ECF1' : '#8A94AC') +
+          ';border-left:2px solid ' + (i === this.state.svc ? '#34D9A3' : 'transparent'),
+        arrowStyle: 'font-size:13px;color:' + (i === this.state.svc ? '#34D9A3' : 'transparent')
+      })),
+      activeImg: s ? this.src(s.img) : '',
+      activeTag: s ? s.tag : '',
+      activeTitle: s ? s.title : '',
+      activeBody: s ? s.body : '',
+      activeChips: s ? s.chips : [],
+
+      filters: FILTERS.map(label => ({
+        label,
+        select: () => this.setState({filter: label}),
+        style: 'font-family:JetBrains Mono,monospace;font-size:11px;letter-spacing:.06em;padding:9px 15px;border-radius:20px;cursor:pointer;border:1px solid ' +
+          (f === label ? '#34D9A3' : '#2A3348') + ';background:' + (f === label ? 'rgba(52,217,163,.12)' : 'transparent') +
+          ';color:' + (f === label ? '#34D9A3' : '#8A94AC')
+      })),
+      visibleProjects: PROJECTS.filter(p => f === 'All' || p.sector === f.toUpperCase()).map(p => ({
+        name: p.name, sector: p.sector, blurb: p.blurb, stack: p.stack, status: p.status,
+        img: this.src(p.img),
+        cardStyle: 'background:#121826;border:1px solid #232B3D;border-radius:14px;overflow:hidden;transition:border-color .15s,transform .15s'
+      })),
+
+      quoteText: q.text, quoteName: q.name, quoteRole: q.role, quoteInitials: q.initials,
+      quoteImg: this.src(q.img),
+      quoteCounter: (this.state.quote + 1) + ' / ' + QUOTES.length,
+      prevQuote: () => this.setState(st => ({quote: (st.quote - 1 + QUOTES.length) % QUOTES.length})),
+      nextQuote: () => this.setState(st => ({quote: (st.quote + 1) % QUOTES.length})),
+
+      sent: this.state.sent,
+      notSent: !this.state.sent,
+      fBusiness: this.state.business, fPhone: this.state.phone, fNote: this.state.note,
+      setBusiness: e => this.setState({business: e.target.value}),
+      setPhone: e => this.setState({phone: e.target.value, phoneError: false}),
+      setNote: e => this.setState({note: e.target.value}),
+      inputStyle: this.input(false),
+      phoneStyle: this.input(this.state.phoneError),
+      areaStyle: this.input(false) + ';resize:vertical;line-height:1.5',
+      phoneError: this.state.phoneError,
+      needs: NEEDS.map(label => {
+        const on = this.state.needs.indexOf(label) > -1;
+        return {
+          label,
+          toggle: () => this.setState(st => ({needs: on ? st.needs.filter(n => n !== label) : st.needs.concat([label])})),
+          style: 'font-size:13px;padding:9px 14px;border-radius:20px;cursor:pointer;font-family:Inter,sans-serif;border:1px solid ' +
+            (on ? '#34D9A3' : '#2A3348') + ';background:' + (on ? 'rgba(52,217,163,.12)' : 'transparent') +
+            ';color:' + (on ? '#34D9A3' : '#B4BCCC')
+        };
+      }),
+      submit: () => {
+        if (this.state.phone.trim().length < 7) { this.setState({phoneError: true}); return; }
+        this.setState({sent: true});
+      },
+      resetForm: () => this.setState({sent: false, business: '', phone: '', note: '', needs: []})
+    };
+  }
+}
+
+</script>
+</body>
+</html>
