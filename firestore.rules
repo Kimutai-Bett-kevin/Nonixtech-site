@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function str(v, max) { return v is string && v.size() <= max; }
+
+    // Shop catalogue and settings: public to read, admin to change.
+    match /products/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /productPhotos/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /settings/{id} { allow read: if true; allow write: if isAdmin(); }
+
+    // Customers can place an order but never read or change one; only the admin can.
+    match /orders/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['no', 'status', 'customer', 'mpesaCode', 'items', 'subtotal', 'delivery', 'total', 'createdAt'])
+        && request.resource.data.no == id && id.matches('NX-[0-9]{6}')
+        && request.resource.data.status == 'awaiting_payment'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.customer is map
+        && request.resource.data.customer.keys().hasOnly(['name', 'phone', 'address'])
+        && str(request.resource.data.customer.name, 100) && str(request.resource.data.customer.phone, 30)
+        && str(request.resource.data.customer.address, 300) && str(request.resource.data.mpesaCode, 12)
+        && request.resource.data.items is list && request.resource.data.items.size() > 0 && request.resource.data.items.size() <= 50
+        && request.resource.data.total is number && request.resource.data.total > 0;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Enterprise quote requests (RFPs): same pattern.
+    match /quotes/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['ref', 'status', 'org', 'orgType', 'email', 'phone', 'notes', 'users', 'sites', 'deploy', 'addons', 'systems', 'estimateLow', 'estimateHigh', 'createdAt'])
+        && request.resource.data.ref == id && id.matches('RFP-[0-9]{4}-[0-9]{6}')
+        && request.resource.data.status == 'new'
+        && request.resource.data.createdAt == request.time
+        && str(request.resource.data.org, 150) && str(request.resource.data.email, 150)
+        && str(request.resource.data.phone, 30) && str(request.resource.data.notes, 3000)
+        && request.resource.data.systems is list && request.resource.data.systems.size() <= 20;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Admin list is set up from the command line only.
+    match /admins/{uid} { allow read: if request.auth != null && request.auth.uid == uid; allow write: if false; }
+  }
+}

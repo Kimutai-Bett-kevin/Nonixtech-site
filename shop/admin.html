@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Nonix Shop Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0B0F19; --panel:rgba(15,23,42,.65); --line:rgba(148,163,184,.16); --text:#E5E7EB; --muted:#94A3B8; --brand:#06B6D4; --ok:#10B981; --warn:#FCD34D; --bad:#FCA5A5; --indigo:#6366F1; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--text); font-family:'Sora',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:var(--brand); }
+  .mono { font-family:'JetBrains Mono',monospace; }
+  header { position:sticky; top:0; z-index:5; background:rgba(11,15,25,.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+  .bar { max-width:1200px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; gap:12px 20px; flex-wrap:wrap; }
+  .brand { font-weight:700; letter-spacing:.06em; } .brand span { color:var(--brand); }
+  nav { display:flex; gap:4px; flex-wrap:wrap; }
+  nav button, .btn { height:38px; border:1px solid var(--line); background:transparent; color:var(--text); border-radius:9px; padding:0 14px; font:600 13px 'Sora',sans-serif; cursor:pointer; }
+  nav button.on { background:rgba(99,102,241,.18); border-color:var(--indigo); color:#fff; }
+  .btn.primary { background:var(--ok); border-color:var(--ok); color:#04140D; }
+  .btn.danger { color:var(--bad); border-color:rgba(239,68,68,.4); }
+  .btn:disabled { opacity:.5; cursor:default; }
+  main { max-width:1200px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:26px; margin:0 0 16px; letter-spacing:-.02em; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .list { display:flex; flex-direction:column; gap:12px; }
+  .row { display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; }
+  .grow { flex:1; min-width:0; }
+  .muted { color:var(--muted); font-size:13px; }
+  .tag { font-size:11px; font-weight:600; padding:3px 9px; border-radius:99px; white-space:nowrap; }
+  .flag { color:var(--bad); font-size:12px; font-weight:600; }
+  input, select, textarea { width:100%; background:rgba(11,15,25,.7); border:1px solid rgba(148,163,184,.25); border-radius:9px; color:var(--text); font:14px 'Sora',sans-serif; padding:10px 12px; outline:none; }
+  input:focus, select:focus, textarea:focus { border-color:var(--indigo); }
+  select.status { width:auto; padding:6px 10px; }
+  label { display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--muted); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+  .items { margin:8px 0 0; padding:0; list-style:none; font-size:14px; display:flex; flex-direction:column; gap:3px; }
+  .photos { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
+  .slot { aspect-ratio:1; border:1.5px dashed rgba(148,163,184,.3); border-radius:12px; display:flex; flex-direction:column; overflow:hidden; cursor:pointer; position:relative; }
+  .slot .img { flex:1; background:center/contain no-repeat; display:grid; place-items:center; color:var(--muted); font-size:22px; }
+  .slot .lbl { font-size:12px; padding:6px 8px; border-top:1px solid var(--line); display:flex; justify-content:space-between; }
+  .slot .lbl button { border:none; background:none; color:var(--bad); cursor:pointer; font-size:12px; padding:0; }
+  .center { max-width:380px; margin:10vh auto; }
+  .err { color:var(--bad); font-size:13px; min-height:18px; }
+  .toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:#111827; border:1px solid rgba(16,185,129,.5); padding:10px 16px; border-radius:10px; font-size:14px; z-index:10; }
+  .hidden { display:none !important; }
+  @media (max-width:600px) { h1 { font-size:22px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <span class="brand">NONIX<span> SHOP</span> · admin</span>
+    <nav id="tabs" class="hidden">
+      <button data-tab="orders">Orders</button><button data-tab="quotes">Quotes</button><button data-tab="products">Products</button><button data-tab="settings">Settings</button>
+    </nav>
+    <span class="grow"></span>
+    <a href="/shop/" target="_blank" class="muted">Open shop ↗</a>
+    <button id="signout" class="btn hidden">Sign out</button>
+  </div>
+</header>
+<main id="app"><p class="muted">Loading…</p></main>
+<div id="toast" class="toast hidden"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({ apiKey: 'AIzaSyDVrbRjnrgtoxBCwbLHT3yd8gkH5WQmHzo', authDomain: 'nonixtech.firebaseapp.com', projectId: 'nonixtech', appId: '1:205776166726:web:ec7611f4f312b075024f47' });
+const auth = firebase.auth(), db = firebase.firestore();
+const app = document.getElementById('app'), tabsEl = document.getElementById('tabs');
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const kes = n => 'KES ' + Math.round(Number(n) || 0).toLocaleString('en-KE');
+const when = ts => ts && ts.toDate ? ts.toDate().toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+const PHOTO_SLOTS = [['front', 'Front'], ['right', 'Right side'], ['back', 'Back'], ['left', 'Left side'], ['top', 'Top']];
+const ORDER_STATUS = { awaiting_payment: ['Awaiting payment', '#FCD34D'], paid: ['Paid', '#6EE7B7'], delivered: ['Delivered', '#A5F3FC'], cancelled: ['Cancelled', '#FCA5A5'] };
+const QUOTE_STATUS = { new: ['New', '#FCD34D'], contacted: ['Contacted', '#A5F3FC'], won: ['Won', '#6EE7B7'], lost: ['Lost', '#FCA5A5'] };
+let tab = 'orders', products = [], unsub = null;
+
+function toast(t) { const el = document.getElementById('toast'); el.textContent = t; el.classList.remove('hidden'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.add('hidden'), 2600); }
+function tag(map, s) { const [l, c] = map[s] || [s, '#CBD5E1']; return `<span class="tag" style="color:${c};background:${c}22">${esc(l)}</span>`; }
+function statusSelect(map, cur, attr) { return `<select class="status" ${attr}>${Object.entries(map).map(([k, [l]]) => `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`; }
+
+// ---------- Sign in ----------
+function showLogin(msg) {
+  tabsEl.classList.add('hidden'); document.getElementById('signout').classList.add('hidden');
+  app.innerHTML = `<div class="center card"><h1>Sign in</h1>
+    <form id="lf" class="list"><label>Email<input id="le" type="email" autocomplete="username" required></label>
+    <label>Password<input id="lp" type="password" autocomplete="current-password" required></label>
+    <div class="err" id="lerr">${esc(msg || '')}</div>
+    <button class="btn primary" type="submit">Sign in</button>
+    <button class="btn" type="button" id="lreset">Forgot password? Email me a reset link</button></form></div>`;
+  document.getElementById('lf').onsubmit = async e => {
+    e.preventDefault();
+    try { await auth.signInWithEmailAndPassword(le.value.trim(), lp.value); }
+    catch (err) { lerr.textContent = 'Wrong email or password.'; }
+  };
+  document.getElementById('lreset').onclick = async () => {
+    if (!le.value.trim()) { lerr.textContent = 'Type your email first.'; return; }
+    try { await auth.sendPasswordResetEmail(le.value.trim()); lerr.textContent = ''; toast('Reset link sent. Check your inbox and spam.'); }
+    catch (err) { lerr.textContent = 'Could not send a reset link to that address.'; }
+  };
+}
+
+auth.onAuthStateChanged(async user => {
+  if (unsub) { unsub(); unsub = null; }
+  if (!user) return showLogin();
+  const ok = await db.doc('admins/' + user.uid).get().then(d => d.exists).catch(() => false);
+  if (!ok) { await auth.signOut(); return showLogin(user.email + ' is not a shop admin.'); }
+  tabsEl.classList.remove('hidden'); document.getElementById('signout').classList.remove('hidden');
+  show(tab);
+});
+document.getElementById('signout').onclick = () => auth.signOut();
+tabsEl.onclick = e => { const t = e.target.dataset.tab; if (t) show(t); };
+
+function show(t) {
+  tab = t; if (unsub) { unsub(); unsub = null; }
+  [...tabsEl.children].forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  ({ orders: showOrders, quotes: showQuotes, products: showProducts, settings: showSettings })[t]();
+}
+
+// ---------- Orders ----------
+async function showOrders() {
+  app.innerHTML = '<h1>Orders</h1><div id="ol" class="list"><p class="muted">Loading…</p></div>';
+  const prices = Object.fromEntries((await db.collection('products').get()).docs.map(d => [d.id, Number(d.data().price) || 0]));
+  unsub = db.collection('orders').orderBy('createdAt', 'desc').limit(200).onSnapshot(snap => {
+    const ol = document.getElementById('ol'); if (!ol) return;
+    if (snap.empty) { ol.innerHTML = '<p class="muted">No orders yet.</p>'; return; }
+    ol.innerHTML = snap.docs.map(d => {
+      const o = d.data(), c = o.customer || {};
+      // Customers send their own prices, so flag any line that doesn't match the current catalogue.
+      const bad = (o.items || []).filter(i => prices[i.id] != null && prices[i.id] !== Number(i.price));
+      const sum = (o.items || []).reduce((a, i) => a + Number(i.price) * Number(i.qty), 0) + (Number(o.delivery) || 0);
+      return `<div class="card"><div class="row">
+        <span class="mono" style="font-weight:600">${esc(o.no)}</span>${tag(ORDER_STATUS, o.status)}
+        <span class="muted">${esc(when(o.createdAt))}</span><span class="grow"></span>
+        <span style="font-weight:700;color:var(--ok)">${kes(o.total)}</span>
+        ${statusSelect(ORDER_STATUS, o.status, `data-order="${esc(d.id)}"`)}</div>
+        <div class="row" style="margin-top:8px"><span><b>${esc(c.name)}</b> · <a href="tel:${esc(c.phone)}">${esc(c.phone)}</a></span><span class="muted">${esc(c.address)}</span></div>
+        <ul class="items">${(o.items || []).map(i => `<li>${esc(i.qty)} × ${esc(i.name)} <span class="muted">@ ${kes(i.price)}</span></li>`).join('')}
+          <li class="muted">Delivery ${o.delivery ? kes(o.delivery) : 'free'}</li></ul>
+        <div class="row" style="margin-top:8px"><span class="muted">M-Pesa code:</span><span class="mono">${o.mpesaCode ? esc(o.mpesaCode) : '<span class="muted">not given</span>'}</span>
+        ${bad.length || sum !== Number(o.total) ? '<span class="flag">⚠ Prices don’t match the catalogue. Check before accepting payment.</span>' : ''}</div></div>`;
+    }).join('');
+  }, err => { document.getElementById('ol').innerHTML = `<p class="err">${esc(err.message)}</p>`; });
+}
+app.addEventListener('change', async e => {
+  const el = e.target;
+  if (el.dataset.order) { await db.doc('orders/' + el.dataset.order).update({ status: el.value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }); toast('Order updated'); }
+  if (el.dataset.quote) { await db.doc('quotes/' + el.dataset.quote).update({ status: el.value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }); toast('Quote updated'); }
+});
+
+// ---------- Quotes ----------
+function showQuotes() {
+  app.innerHTML = '<h1>Quote requests</h1><div id="ql" class="list"><p class="muted">Loading…</p></div>';
+  unsub = db.collection('quotes').orderBy('createdAt', 'desc').limit(200).onSnapshot(snap => {
+    const ql = document.getElementById('ql'); if (!ql) return;
+    if (snap.empty) { ql.innerHTML = '<p class="muted">No quote requests yet.</p>'; return; }
+    ql.innerHTML = snap.docs.map(d => { const q = d.data(); return `<div class="card"><div class="row">
+      <span class="mono" style="font-weight:600">${esc(q.ref)}</span>${tag(QUOTE_STATUS, q.status)}<span class="muted">${esc(when(q.createdAt))}</span><span class="grow"></span>
+      <span class="muted">Estimate</span><b>${kes(q.estimateLow)} – ${kes(q.estimateHigh)}</b>${statusSelect(QUOTE_STATUS, q.status, `data-quote="${esc(d.id)}"`)}</div>
+      <div class="row" style="margin-top:8px"><b>${esc(q.org)}</b><span class="muted">${esc(q.orgType)}</span><a href="mailto:${esc(q.email)}">${esc(q.email)}</a>${q.phone ? `<a href="tel:${esc(q.phone)}">${esc(q.phone)}</a>` : ''}</div>
+      <div class="muted" style="margin-top:6px">${esc((q.systems || []).join(', '))} · ${esc(q.users)} users · ${esc(q.sites)} site(s) · ${esc(q.deploy)}${(q.addons || []).length ? ' · ' + esc(q.addons.join(', ')) : ''}</div>
+      ${q.notes ? `<div style="margin-top:8px;font-size:14px;white-space:pre-wrap">${esc(q.notes)}</div>` : ''}</div>`; }).join('');
+  }, err => { document.getElementById('ql').innerHTML = `<p class="err">${esc(err.message)}</p>`; });
+}
+
+// ---------- Products ----------
+async function showProducts() {
+  app.innerHTML = '<div class="row" style="margin-bottom:16px"><h1 style="margin:0">Products</h1><span class="grow"></span><button class="btn primary" id="padd">Add product</button></div><div id="pl" class="list"><p class="muted">Loading…</p></div>';
+  document.getElementById('padd').onclick = () => editProduct(null);
+  const snap = await db.collection('products').get();
+  products = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.sort || 0) - (b.sort || 0) || String(a.name).localeCompare(b.name));
+  const pl = document.getElementById('pl'); if (!pl) return;
+  pl.innerHTML = products.length ? products.map(p => `<div class="card row">
+      <span class="tag" style="color:${p.active ? '#6EE7B7' : '#94A3B8'};background:${p.active ? '#6EE7B722' : '#94A3B822'}">${p.active ? 'On sale' : 'Hidden'}</span>
+      <div class="grow"><b>${esc(p.name)}</b> <span class="muted">${esc(p.type)} · ${esc(p.keySpec)}</span></div>
+      <b style="color:var(--ok)">${kes(p.price)}</b><button class="btn" data-edit="${esc(p.id)}">Edit</button></div>`).join('')
+    : '<p class="muted">No products yet. Click "Add product".</p>';
+  pl.onclick = e => { const id = e.target.dataset.edit; if (id) editProduct(products.find(p => p.id === id)); };
+}
+
+async function editProduct(p) {
+  const isNew = !p; p = p || { name: '', type: 'Smartphone', model: 'phone', price: 0, accent: '#6366F1', specs: ['', '', ''], keySpec: '', blurb: '', rows: [], active: true, sort: products.length + 1 };
+  const photos = isNew ? {} : await db.doc('productPhotos/' + p.id).get().then(d => d.exists ? d.data() : {}).catch(() => ({}));
+  const pending = { ...photos };
+  app.innerHTML = `<div class="row" style="margin-bottom:16px"><button class="btn" id="pback">← Products</button><h1 style="margin:0">${isNew ? 'New product' : esc(p.name)}</h1></div>
+  <form id="pf" class="list">
+    <div class="card grid">
+      <label>Name<input name="name" required maxlength="80" value="${esc(p.name)}"></label>
+      <label>Category<input name="type" required maxlength="40" value="${esc(p.type)}" placeholder="Smartphone, Laptop, Mini PC…"></label>
+      <label>Price (KES, incl. VAT)<input name="price" type="number" min="1" step="1" required value="${esc(p.price)}"></label>
+      <label>3D model shape<select name="model">${[['phone', 'Phone'], ['laptop', 'Laptop'], ['minipc', 'Mini PC / box']].map(([v, l]) => `<option value="${v}"${p.model === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label>Accent colour<input name="accent" type="color" value="${esc(p.accent || '#6366F1')}" style="height:42px;padding:4px"></label>
+      <label>Display order<input name="sort" type="number" step="1" value="${esc(p.sort || 0)}"></label>
+      <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text);font-size:14px"><input name="active" type="checkbox" style="width:auto"${p.active ? ' checked' : ''}> On sale (shown in the shop)</label>
+    </div>
+    <div class="card list">
+      <label>Short spec line (shown on cards)<input name="keySpec" maxlength="80" value="${esc(p.keySpec)}" placeholder="A18 Pro · 8GB RAM · 256GB"></label>
+      <label>Description<textarea name="blurb" rows="2" maxlength="400">${esc(p.blurb)}</textarea></label>
+      <label>Spec sheet, one per line as "Label: value"<textarea name="rows" rows="6" placeholder="Display: 6.3&quot; OLED&#10;Memory: 8 GB RAM · 256 GB">${esc((p.rows || []).map(r => r.k + ': ' + r.v).join('\n'))}</textarea></label>
+      <div class="grid">${[0, 1, 2].map(i => `<label>Ad line ${i + 1}<input name="spec${i}" maxlength="24" value="${esc((p.specs || [])[i] || '')}"></label>`).join('')}</div>
+    </div>
+    <div class="card list"><b>360° photos</b><span class="muted">Click a box to add a photo. Large photos are shrunk automatically.</span>
+      <div class="photos" id="slots"></div></div>
+    <div class="err" id="perr"></div>
+    <div class="row"><button class="btn primary" type="submit" id="psave">Save product</button><span class="grow"></span>${isNew ? '' : '<button class="btn danger" type="button" id="pdel">Delete product</button>'}</div>
+  </form>`;
+  document.getElementById('pback').onclick = () => show('products');
+  const drawSlots = () => {
+    document.getElementById('slots').innerHTML = PHOTO_SLOTS.map(([k, l]) => `<label class="slot"><input type="file" accept="image/*" data-slot="${k}" hidden>
+      <div class="img" style="${pending[k] ? `background-image:url('${pending[k]}')` : ''}">${pending[k] ? '' : '+'}</div>
+      <div class="lbl"><span>${l}</span>${pending[k] ? `<button type="button" data-clear="${k}">Remove</button>` : ''}</div></label>`).join('');
+  };
+  drawSlots();
+  const slots = document.getElementById('slots');
+  slots.onchange = async e => { const k = e.target.dataset.slot, f = e.target.files[0]; if (!k || !f) return; try { pending[k] = await shrink(f); drawSlots(); } catch (err) { toast('Could not read that image'); } };
+  slots.onclick = e => { const k = e.target.dataset.clear; if (k) { e.preventDefault(); delete pending[k]; drawSlots(); } };
+  if (!isNew) document.getElementById('pdel').onclick = async () => {
+    if (!confirm('Delete ' + p.name + '? This cannot be undone.')) return;
+    await db.doc('products/' + p.id).delete(); await db.doc('productPhotos/' + p.id).delete(); toast('Deleted'); show('products');
+  };
+  document.getElementById('pf').onsubmit = async e => {
+    e.preventDefault(); const f = e.target, btn = document.getElementById('psave');
+    const rows = f.elements.rows.value.split('\n').map(l => l.trim()).filter(Boolean).map(l => { const i = l.indexOf(':'); return i > 0 ? { k: l.slice(0, i).trim(), v: l.slice(i + 1).trim() } : { k: l, v: '' }; });
+    const data = { name: f.elements.name.value.trim(), type: f.elements.type.value.trim(), price: Math.round(Number(f.elements.price.value)), model: f.elements.model.value, accent: f.elements.accent.value, sort: Number(f.elements.sort.value) || 0,
+      active: f.elements.active.checked, keySpec: f.elements.keySpec.value.trim(), blurb: f.elements.blurb.value.trim(), rows, specs: [0, 1, 2].map(i => f.elements['spec' + i].value.trim()).filter(Boolean),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+    if (!data.name || !(data.price > 0)) { document.getElementById('perr').textContent = 'Name and a price above 0 are required.'; return; }
+    const id = isNew ? (data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'product') + '-' + Math.random().toString(36).slice(2, 6) : p.id;
+    const size = Object.values(pending).reduce((a, v) => a + v.length, 0);
+    if (size > 950000) { document.getElementById('perr').textContent = 'Photos are too large together. Remove one or use smaller images.'; return; }
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      await db.doc('products/' + id).set(data, { merge: true });
+      await db.doc('productPhotos/' + id).set(pending);
+      toast('Saved'); show('products');
+    } catch (err) { document.getElementById('perr').textContent = err.message; btn.disabled = false; btn.textContent = 'Save product'; }
+  };
+}
+
+// Resize to at most 900px and re-encode, so five photos fit in one Firestore document (1 MB limit).
+function shrink(file) {
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const s = Math.min(1, 900 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      let out = c.toDataURL('image/webp', 0.78); if (!out.startsWith('data:image/webp')) out = c.toDataURL('image/jpeg', 0.8);
+      res(out);
+    };
+    img.onerror = rej; img.src = url;
+  });
+}
+
+// ---------- Settings ----------
+async function showSettings() {
+  const s = await db.doc('settings/shop').get().then(d => d.exists ? d.data() : {}).catch(() => ({}));
+  app.innerHTML = `<h1>Settings</h1><form id="sf" class="card list" style="max-width:560px">
+    <b>M-Pesa payments</b><span class="muted">Shown to customers at checkout. Leave the number empty and the shop will say you'll call them with payment details.</span>
+    <div class="grid">
+      <label>Type<select name="mpesaType"><option value="till"${s.mpesaType !== 'paybill' ? ' selected' : ''}>Till (Buy Goods)</option><option value="paybill"${s.mpesaType === 'paybill' ? ' selected' : ''}>Paybill</option></select></label>
+      <label>Till / business number<input name="mpesaNumber" inputmode="numeric" maxlength="12" value="${esc(s.mpesaNumber || '')}"></label>
+      <label>Name customers will see<input name="mpesaName" maxlength="60" value="${esc(s.mpesaName || 'NonixTech')}"></label>
+    </div>
+    <b style="margin-top:8px">Contact</b>
+    <div class="grid">
+      <label>Phone shown in the shop<input name="phone" maxlength="30" value="${esc(s.phone || '+254 724 171 555')}"></label>
+      <label>WhatsApp number (for "Ask sales")<input name="whatsapp" maxlength="20" value="${esc(s.whatsapp || '254724171555')}" placeholder="2547XXXXXXXX"></label>
+    </div>
+    <div class="row"><button class="btn primary" type="submit">Save settings</button></div></form>`;
+  document.getElementById('sf').onsubmit = async e => {
+    e.preventDefault(); const f = e.target;
+    await db.doc('settings/shop').set({ mpesaType: f.elements.mpesaType.value, mpesaNumber: f.elements.mpesaNumber.value.replace(/\D/g, ''), mpesaName: f.elements.mpesaName.value.trim(),
+      phone: f.elements.phone.value.trim(), whatsapp: f.elements.whatsapp.value.replace(/\D/g, '') });
+    toast('Settings saved');
+  };
+}
+</script>
+</body>
+</html>

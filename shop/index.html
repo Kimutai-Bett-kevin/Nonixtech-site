@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nonix Shop</title>
+<meta name="description" content="Shop phones, laptops and enterprise systems from NonixTech. Inspect every device in 3D and pay with M-Pesa.">
+<script src="/support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#0B0F19;color:#E5E7EB;font-family:'Sora',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+*{box-sizing:border-box;}
+a{color:#06B6D4;text-decoration:none;} a:hover{color:#67E8F9;text-decoration:underline;}
+input,textarea,select,button{font-family:inherit;}
+select option{background:#0F172A;color:#E5E7EB;}
+::selection{background:rgba(99,102,241,.45);}
+@keyframes nxPulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</helmet>
+
+<div style="position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 500px at 15% -10%,rgba(99,102,241,.16),transparent 60%),radial-gradient(700px 420px at 95% 5%,rgba(6,182,212,.10),transparent 60%);"></div>
+
+<div style="position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;">
+  <header style="position:sticky;top:0;z-index:40;background:rgba(11,15,25,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(148,163,184,.12);">
+    <div style="max-width:1320px;margin:0 auto;padding:10px 24px;min-height:64px;display:flex;align-items:center;gap:12px 24px;flex-wrap:wrap;">
+      <button onClick="{{ goHome }}" style="border:none;background:none;color:#fff;display:flex;align-items:center;gap:10px;cursor:pointer;padding:0;">
+        <span style="width:22px;height:22px;border-radius:5px;transform:rotate(45deg);border:2px solid #06B6D4;box-shadow:0 0 14px rgba(6,182,212,.6),inset 0 0 8px rgba(99,102,241,.6);"></span>
+        <span style="font-weight:700;font-size:18px;letter-spacing:.06em;">NONIX<span style="color:#06B6D4;"> SHOP</span></span>
+      </button>
+      <nav style="display:flex;gap:4px;flex-wrap:wrap;">
+        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="3">
+          <button onClick="{{ n.go }}" style="height:36px;border:none;border-radius:9px;padding:0 14px;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;background:{{ n.bg }};color:{{ n.fg }};" style-hover="color:#fff;">{{ n.label }}</button>
+        </sc-for>
+      </nav>
+      <div style="flex:1;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onClick="{{ goRfp }}" style="height:38px;border:1px solid rgba(6,182,212,.5);background:rgba(6,182,212,.08);color:#A5F3FC;border-radius:10px;padding:0 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;" style-hover="background:rgba(6,182,212,.16);">RFP · {{ rfpCount }}</button>
+        <button onClick="{{ goCart }}" style="height:38px;border:none;background:#10B981;color:#04140D;border-radius:10px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 0 20px rgba(16,185,129,.35);" style-hover="background:#34D399;">Cart · {{ cartCount }}</button>
+      </div>
+    </div>
+  </header>
+
+  <main style="flex:1;">
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="Home">
+      <sc-if value="{{ layoutSplit }}" hint-placeholder-val="{{ true }}">
+        <section style="max-width:1320px;margin:0 auto;padding:56px 24px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:36px;align-items:center;">
+          <div style="display:flex;flex-direction:column;gap:24px;">
+            <span style="align-self:flex-start;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;color:#A5B4FC;border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.08);padding:6px 12px;border-radius:99px;">HARDWARE · ENTERPRISE SYSTEMS · 3D SHOWROOM</span>
+            <h1 style="margin:0;font-size:clamp(40px,5.4vw,72px);line-height:1.02;letter-spacing:-.035em;font-weight:700;color:#fff;text-wrap:balance;">Take it apart before you buy it.</h1>
+            <p style="margin:0;font-size:18px;line-height:1.6;color:#94A3B8;max-width:520px;text-wrap:pretty;">Inspect every device in 3D, down to the chip, RAM and battery. Test enterprise systems in a live demo, then pay with M-Pesa or request a quote for your institution.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button onClick="{{ scrollHardware }}" style="height:50px;border:none;background:#10B981;color:#04140D;border-radius:12px;padding:0 24px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 28px rgba(16,185,129,.35);" style-hover="background:#34D399;">Shop hardware</button>
+              <button onClick="{{ goEnterprise }}" style="height:50px;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.6);color:#E5E7EB;border-radius:12px;padding:0 22px;font-size:15px;font-weight:600;cursor:pointer;" style-hover="border-color:#6366F1;color:#fff;">Explore enterprise systems</button>
+            </div>
+          </div>
+          <div style="position:relative;height:clamp(380px,56vh,560px);border-radius:24px;overflow:hidden;border:1px solid rgba(99,102,241,.3);background:radial-gradient(circle at 50% 40%,rgba(99,102,241,.18),rgba(11,15,25,.2) 60%);box-shadow:0 0 60px -20px rgba(99,102,241,.5);">
+            <div ref="{{ heroRef }}" style="position:absolute;inset:0;"></div>
+            <div style="position:absolute;top:16px;left:18px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#A5F3FC;letter-spacing:.08em;pointer-events:none;">{{ heroName }} · DRAG TO ROTATE</div>
+            <div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(11,15,25,.75);border:1px solid rgba(148,163,184,.18);backdrop-filter:blur(10px);">
+              <sc-for list="{{ heroModes }}" as="m" hint-placeholder-count="4">
+                <button onClick="{{ m.pick }}" style="height:32px;border:none;border-radius:8px;padding:0 12px;font-size:12px;font-weight:600;cursor:pointer;background:{{ m.bg }};color:{{ m.fg }};white-space:nowrap;">{{ m.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ layoutStage }}" hint-placeholder-val="{{ false }}">
+        <section style="position:relative;height:min(82vh,760px);min-height:520px;border-bottom:1px solid rgba(148,163,184,.12);overflow:hidden;">
+          <div ref="{{ heroRef }}" style="position:absolute;inset:0;"></div>
+          <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(11,15,25,.85) 0%,rgba(11,15,25,0) 34%,rgba(11,15,25,0) 70%,rgba(11,15,25,.9) 100%);"></div>
+          <div style="position:absolute;top:48px;left:0;right:0;text-align:center;padding:0 24px;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:14px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;color:#A5F3FC;">{{ heroName }} · LIVE 3D</span>
+            <h1 style="margin:0;font-size:clamp(36px,5vw,64px);line-height:1.04;letter-spacing:-.035em;font-weight:700;color:#fff;text-wrap:balance;max-width:900px;">See inside before you buy.</h1>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:28px;display:flex;flex-direction:column;align-items:center;gap:16px;padding:0 24px;">
+            <div style="display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(11,15,25,.75);border:1px solid rgba(148,163,184,.18);backdrop-filter:blur(10px);">
+              <sc-for list="{{ heroModes }}" as="m" hint-placeholder-count="4">
+                <button onClick="{{ m.pick }}" style="height:34px;border:none;border-radius:8px;padding:0 14px;font-size:13px;font-weight:600;cursor:pointer;background:{{ m.bg }};color:{{ m.fg }};white-space:nowrap;">{{ m.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+              <button onClick="{{ openHeroProduct }}" style="height:48px;border:none;background:#10B981;color:#04140D;border-radius:12px;padding:0 22px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 28px rgba(16,185,129,.35);" style-hover="background:#34D399;">{{ heroCta }}</button>
+              <button onClick="{{ goEnterprise }}" style="height:48px;border:1px solid rgba(148,163,184,.3);background:rgba(15,23,42,.7);color:#E5E7EB;border-radius:12px;padding:0 22px;font-size:15px;font-weight:600;cursor:pointer;" style-hover="border-color:#6366F1;">Enterprise systems</button>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ layoutCatalog }}" hint-placeholder-val="{{ false }}">
+        <section style="max-width:1320px;margin:0 auto;padding:44px 24px 8px;display:flex;flex-direction:column;gap:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px 32px;flex-wrap:wrap;">
+            <h1 style="margin:0;font-size:clamp(34px,4.4vw,58px);line-height:1.04;letter-spacing:-.035em;font-weight:700;color:#fff;max-width:720px;text-wrap:balance;">Devices you can inspect. Systems you can test.</h1>
+            <p style="margin:0;max-width:380px;color:#94A3B8;font-size:16px;line-height:1.6;">Every listing has a 3D model, an X-ray view and a 4-second spec ad. Pay with M-Pesa.</p>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));border-radius:24px;overflow:hidden;border:1px solid rgba(99,102,241,.3);background:rgba(15,23,42,.55);">
+            <div style="position:relative;aspect-ratio:16/10;background:#0B0F19;"><canvas ref="{{ featuredAdRef }}" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas></div>
+            <div style="padding:32px;display:flex;flex-direction:column;justify-content:center;gap:16px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;color:#A5F3FC;">FEATURED · {{ featured.type }}</span>
+              <div style="font-size:36px;font-weight:700;letter-spacing:-.02em;color:#fff;">{{ featured.name }}</div>
+              <div style="color:#94A3B8;font-size:15px;line-height:1.6;">{{ featured.blurb }}</div>
+              <div style="font-size:26px;font-weight:700;color:#10B981;">{{ featured.priceText }}</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button onClick="{{ featured.open }}" style="height:46px;border:1px solid rgba(148,163,184,.3);background:transparent;color:#E5E7EB;border-radius:11px;padding:0 18px;font-size:14px;font-weight:600;cursor:pointer;" style-hover="border-color:#6366F1;">View in 3D</button>
+                <button onClick="{{ featured.add }}" style="height:46px;border:none;background:#10B981;color:#04140D;border-radius:11px;padding:0 20px;font-size:14px;font-weight:700;cursor:pointer;" style-hover="background:#34D399;">Add to cart</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <section ref="{{ hardwareRef }}" style="max-width:1320px;margin:0 auto;padding:48px 24px 24px;display:flex;flex-direction:column;gap:22px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;color:#06B6D4;">01 · HARDWARE</span>
+            <h2 style="margin:0;font-size:32px;font-weight:700;letter-spacing:-.02em;color:#fff;">Phones, laptops and compute</h2>
+          </div>
+          <span style="font-size:14px;color:#94A3B8;">Each card plays a 4-second spec ad.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;">
+          <sc-for list="{{ productCards }}" as="p" hint-placeholder-count="5">
+            <div style="background:linear-gradient(180deg,rgba(30,41,59,.55),rgba(15,23,42,.55));border:1px solid rgba(148,163,184,.14);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s,border-color .2s;" style-hover="border-color:rgba(99,102,241,.6);box-shadow:0 0 0 1px rgba(99,102,241,.3),0 14px 44px -12px rgba(99,102,241,.5);">
+              <button onClick="{{ p.open }}" style="position:relative;aspect-ratio:4/3;background:#0B0F19;border:none;padding:0;cursor:pointer;display:block;width:100%;">
+                <canvas ref="{{ p.adRef }}" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
+              </button>
+              <div style="padding:16px 16px 18px;display:flex;flex-direction:column;gap:6px;flex:1;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;color:#06B6D4;">{{ p.typeUpper }}</span>
+                <span style="font-size:18px;font-weight:600;color:#fff;">{{ p.name }}</span>
+                <span style="font-size:13px;color:#94A3B8;">{{ p.keySpec }}</span>
+                <div style="flex:1;min-height:8px;"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                  <span style="font-size:17px;font-weight:700;color:#10B981;white-space:nowrap;">{{ p.priceText }}</span>
+                  <div style="display:flex;gap:6px;">
+                    <button onClick="{{ p.open }}" style="height:34px;border:1px solid rgba(148,163,184,.28);background:transparent;color:#E5E7EB;border-radius:9px;padding:0 10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;" style-hover="border-color:#6366F1;">3D view</button>
+                    <button onClick="{{ p.add }}" style="height:34px;border:none;background:#10B981;color:#04140D;border-radius:9px;padding:0 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;" style-hover="background:#34D399;">Add</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="max-width:1320px;margin:0 auto;padding:40px 24px 64px;display:flex;flex-direction:column;gap:22px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;color:#A5B4FC;">02 · ENTERPRISE SOFTWARE</span>
+            <h2 style="margin:0;font-size:32px;font-weight:700;letter-spacing:-.02em;color:#fff;">Systems for institutions</h2>
+          </div>
+          <button onClick="{{ goEnterprise }}" style="border:none;background:none;color:#A5B4FC;font-size:14px;font-weight:600;cursor:pointer;">Open the showroom →</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;">
+          <sc-for list="{{ swCards }}" as="s" hint-placeholder-count="5">
+            <div style="background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.14);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px;" style-hover="border-color:rgba(99,102,241,.55);">
+              <div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:99px;background:{{ s.color }};box-shadow:0 0 10px {{ s.color }};"></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:#94A3B8;">{{ s.sectorUpper }}</span></div>
+              <span style="font-size:18px;font-weight:600;color:#fff;">{{ s.name }}</span>
+              <span style="font-size:13px;line-height:1.55;color:#94A3B8;flex:1;">{{ s.desc }}</span>
+              <div style="display:flex;gap:6px;">
+                <button onClick="{{ s.demo }}" style="flex:1;height:36px;border:1px solid rgba(99,102,241,.5);background:rgba(99,102,241,.12);color:#C7D2FE;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;" style-hover="background:rgba(99,102,241,.22);">Live demo</button>
+                <button onClick="{{ s.toggleRfp }}" style="flex:1;height:36px;border:1px solid {{ s.rfpBorder }};background:{{ s.rfpBg }};color:{{ s.rfpFg }};border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;">{{ s.rfpLabel }}</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isProduct }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Product" style="max-width:1320px;margin:0 auto;padding:24px 24px 64px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:32px;align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:12px;min-width:0;">
+        <button onClick="{{ goHome }}" style="align-self:flex-start;border:none;background:none;color:#94A3B8;font-size:14px;cursor:pointer;padding:4px 0;white-space:nowrap;" style-hover="color:#fff;">← All hardware</button>
+        <div style="position:relative;height:clamp(380px,62vh,620px);border-radius:22px;overflow:hidden;border:1px solid rgba(99,102,241,.3);background:radial-gradient(circle at 50% 40%,rgba(99,102,241,.16),rgba(11,15,25,.3) 65%);">
+          <sc-if value="{{ tab3d }}" hint-placeholder-val="{{ true }}">
+            <div ref="{{ productRef }}" style="position:absolute;inset:0;"></div>
+            <div style="position:absolute;top:14px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;pointer-events:none;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#94A3B8;letter-spacing:.06em;">{{ modelSource }}</span>
+              <button onClick="{{ resetView }}" style="pointer-events:auto;height:30px;border:1px solid rgba(148,163,184,.25);background:rgba(11,15,25,.7);color:#E5E7EB;border-radius:8px;padding:0 10px;font-size:12px;cursor:pointer;">Reset view</button>
+            </div>
+            <div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(11,15,25,.78);border:1px solid rgba(148,163,184,.18);backdrop-filter:blur(10px);">
+              <sc-for list="{{ viewModes }}" as="m" hint-placeholder-count="3">
+                <button onClick="{{ m.pick }}" style="height:34px;border:none;border-radius:8px;padding:0 14px;font-size:13px;font-weight:600;cursor:pointer;background:{{ m.bg }};color:{{ m.fg }};white-space:nowrap;">{{ m.label }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ tabPhotos }}" hint-placeholder-val="{{ false }}">
+            <sc-if value="{{ hasPhotos }}" hint-placeholder-val="{{ false }}">
+              <div onPointerDown="{{ photoDown }}" onPointerMove="{{ photoMove }}" onPointerUp="{{ photoUp }}" onPointerLeave="{{ photoUp }}" style="position:absolute;inset:0;display:grid;place-items:center;cursor:ew-resize;touch-action:pan-y;user-select:none;">
+                <sc-if value="{{ photoIsVideo }}" hint-placeholder-val="{{ false }}">
+                  <video ref="{{ photoVidRef }}" autoplay="" muted="" loop="" playsinline="" style="max-width:92%;max-height:88%;object-fit:contain;pointer-events:none;"></video>
+                </sc-if>
+                <sc-if value="{{ photoIsImg }}" hint-placeholder-val="{{ false }}">
+                  <div role="img" aria-label="{{ photoLabel }}" style="position:absolute;inset:6% 4%;background-image:{{ photoBg }};background-size:contain;background-position:center;background-repeat:no-repeat;pointer-events:none;"></div>
+                </sc-if>
+                <span style="position:absolute;top:14px;left:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#A5F3FC;letter-spacing:.08em;">{{ photoLabel }} · DRAG TO TURN</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noPhotos }}" hint-placeholder-val="{{ true }}">
+              <div style="position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;">
+                <div style="max-width:320px;display:flex;flex-direction:column;gap:12px;align-items:center;">
+                  <span style="font-size:16px;font-weight:600;color:#fff;">{{ photoEmptyTitle }}</span>
+                  <span style="font-size:14px;line-height:1.55;color:#94A3B8;">{{ photoEmptyText }}</span>
+                </div>
+              </div>
+            </sc-if>
+          </sc-if>
+          <sc-if value="{{ tabAd }}" hint-placeholder-val="{{ false }}">
+            <canvas ref="{{ pdAdRef }}" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
+          </sc-if>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <sc-for list="{{ mediaTabs }}" as="t" hint-placeholder-count="3">
+            <button onClick="{{ t.pick }}" style="height:36px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};border-radius:9px;padding:0 14px;font-size:13px;font-weight:600;cursor:pointer;">{{ t.label }}</button>
+          </sc-for>
+          <sc-if value="{{ showThumbs }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;">
+              <sc-for list="{{ photoThumbs }}" as="th" hint-placeholder-count="4">
+                <button onClick="{{ th.pick }}" style="height:36px;border:1px solid {{ th.border }};background:rgba(15,23,42,.6);color:#E5E7EB;border-radius:8px;padding:0 10px;font-size:11px;font-family:'JetBrains Mono',monospace;cursor:pointer;">{{ th.label }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px;padding-top:36px;">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;color:#06B6D4;">{{ pd.typeUpper }}</span>
+          <h1 style="margin:0;font-size:clamp(32px,3.6vw,46px);line-height:1.05;letter-spacing:-.03em;font-weight:700;color:#fff;line-height:1.1;">{{ pd.name }}</h1>
+          <p style="margin:0;color:#94A3B8;font-size:15px;line-height:1.6;text-wrap:pretty;">{{ pd.blurb }}</p>
+        </div>
+        <div style="font-size:30px;font-weight:700;color:#10B981;">{{ pd.priceText }}</div>
+        <div style="border:1px solid rgba(148,163,184,.14);border-radius:14px;overflow:hidden;background:rgba(15,23,42,.5);">
+          <sc-for list="{{ pd.rows }}" as="r" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:11px 16px;border-top:1px solid rgba(148,163,184,.08);font-size:14px;">
+              <span style="color:#94A3B8;">{{ r.k }}</span>
+              <span style="color:#E5E7EB;">{{ r.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;border:1px solid rgba(148,163,184,.25);border-radius:11px;height:50px;">
+            <button onClick="{{ qtyDown }}" style="width:44px;height:100%;border:none;background:none;color:#E5E7EB;font-size:20px;cursor:pointer;">−</button>
+            <span style="min-width:28px;text-align:center;font-weight:600;">{{ qty }}</span>
+            <button onClick="{{ qtyUp }}" style="width:44px;height:100%;border:none;background:none;color:#E5E7EB;font-size:20px;cursor:pointer;">+</button>
+          </div>
+          <button onClick="{{ addPd }}" style="flex:1;min-width:160px;height:50px;border:none;background:#10B981;color:#04140D;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 26px rgba(16,185,129,.3);" style-hover="background:#34D399;">Add to cart</button>
+          <button onClick="{{ buyNow }}" style="height:50px;border:1px solid rgba(99,102,241,.55);background:rgba(99,102,241,.12);color:#C7D2FE;border-radius:11px;padding:0 20px;font-size:15px;font-weight:600;cursor:pointer;" style-hover="background:rgba(99,102,241,.22);">Buy now</button>
+        </div>
+        <button onClick="{{ askAboutPd }}" style="align-self:flex-start;border:none;background:none;color:#06B6D4;font-size:14px;font-weight:600;cursor:pointer;padding:0;">Ask sales about {{ pd.name }} →</button>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isEnterprise }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Enterprise showroom" style="max-width:1320px;margin:0 auto;padding:36px 24px 64px;display:flex;flex-direction:column;gap:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:8px;max-width:640px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;color:#A5B4FC;">ENTERPRISE SHOWROOM</span>
+          <h1 style="margin:0;font-size:clamp(30px,3.6vw,44px);letter-spacing:-.03em;font-weight:700;color:#fff;line-height:1.1;">Try the system before you sign</h1>
+          <p style="margin:0;color:#94A3B8;font-size:15px;line-height:1.6;">Pick a system to open its live demo. Add the ones you need to your RFP and we'll prepare a quote.</p>
+        </div>
+        <button onClick="{{ goRfp }}" style="height:44px;border:none;background:#6366F1;color:#fff;border-radius:11px;padding:0 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 0 24px rgba(99,102,241,.4);" style-hover="background:#7C7FF5;">Build RFP · {{ rfpCount }}</button>
+      </div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;">
+        <div style="flex:1 1 260px;max-width:360px;display:flex;flex-direction:column;gap:8px;">
+          <sc-for list="{{ swList }}" as="s" hint-placeholder-count="5">
+            <button onClick="{{ s.pick }}" style="text-align:left;border:1px solid {{ s.border }};background:{{ s.bg }};border-radius:14px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:4px;color:#E5E7EB;">
+              <span style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:#fff;"><span style="width:8px;height:8px;border-radius:99px;background:{{ s.color }};"></span>{{ s.name }}</span>
+              <span style="font-size:12px;color:#94A3B8;">{{ s.sector }} · from {{ s.fromText }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="flex:3 1 560px;min-width:0;border-radius:20px;border:1px solid rgba(99,102,241,.35);background:rgba(15,23,42,.65);overflow:hidden;box-shadow:0 0 60px -24px rgba(99,102,241,.6);">
+          <div style="height:48px;border-bottom:1px solid rgba(148,163,184,.12);display:flex;align-items:center;gap:10px;padding:0 16px;">
+            <span style="display:flex;gap:6px;"><span style="width:10px;height:10px;border-radius:99px;background:#334155;"></span><span style="width:10px;height:10px;border-radius:99px;background:#334155;"></span><span style="width:10px;height:10px;border-radius:99px;background:#334155;"></span></span>
+            <span style="font-size:13px;color:#CBD5E1;font-weight:500;">{{ sw.name }} · demo workspace</span>
+            <span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#6EE7B7;"><span style="width:7px;height:7px;border-radius:99px;background:#10B981;animation:nxPulse 1.4s infinite;"></span>LIVE DATA</span>
+          </div>
+          <div style="display:grid;grid-template-columns:150px minmax(0,1fr);min-height:420px;">
+            <div style="border-right:1px solid rgba(148,163,184,.1);padding:12px 8px;display:flex;flex-direction:column;gap:2px;">
+              <sc-for list="{{ demoModules }}" as="m" hint-placeholder-count="4">
+                <button onClick="{{ m.pick }}" style="text-align:left;border:none;background:{{ m.bg }};color:{{ m.fg }};border-radius:8px;padding:9px 10px;font-size:13px;font-weight:500;cursor:pointer;">{{ m.label }}</button>
+              </sc-for>
+            </div>
+            <div style="padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0;">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;">
+                <sc-for list="{{ demoKpis }}" as="k" hint-placeholder-count="4">
+                  <div style="border:1px solid rgba(148,163,184,.12);background:rgba(11,15,25,.5);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:4px;">
+                    <span style="font-size:11px;color:#94A3B8;">{{ k.label }}</span>
+                    <span style="font-size:20px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;">{{ k.value }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="border:1px solid rgba(148,163,184,.12);border-radius:12px;padding:14px;background:rgba(11,15,25,.4);display:flex;flex-direction:column;gap:10px;">
+                <span style="font-size:12px;color:#94A3B8;">{{ demoChartTitle }}</span>
+                <div style="height:110px;display:flex;align-items:flex-end;gap:6px;">
+                  <sc-for list="{{ demoBars }}" as="b" hint-placeholder-count="12">
+                    <div style="flex:1;height:{{ b.h }};background:linear-gradient(180deg,{{ b.c }},rgba(99,102,241,.25));border-radius:4px 4px 0 0;transition:height .6s ease;"></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="border:1px solid rgba(148,163,184,.12);border-radius:12px;overflow:hidden;">
+                <sc-for list="{{ demoRows }}" as="r" hint-placeholder-count="4">
+                  <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid rgba(148,163,184,.08);font-size:13px;">
+                    <span style="color:#E5E7EB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.a }}</span>
+                    <span style="color:#CBD5E1;font-family:'JetBrains Mono',monospace;font-size:12px;">{{ r.b }}</span>
+                    <span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;color:{{ r.fg }};background:{{ r.bg }};white-space:nowrap;">{{ r.c }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="border-top:1px solid rgba(148,163,184,.12);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span style="font-size:14px;color:#94A3B8;">{{ sw.desc }}</span>
+            <div style="display:flex;gap:8px;">
+              <button onClick="{{ sw.toggleRfp }}" style="height:40px;border:1px solid {{ sw.rfpBorder }};background:{{ sw.rfpBg }};color:{{ sw.rfpFg }};border-radius:10px;padding:0 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">{{ sw.rfpLabel }}</button>
+              <button onClick="{{ goRfp }}" style="height:40px;border:none;background:#6366F1;color:#fff;border-radius:10px;padding:0 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;" style-hover="background:#7C7FF5;">Request quote</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isCart }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Cart" style="max-width:1100px;margin:0 auto;padding:36px 24px 64px;display:flex;flex-direction:column;gap:22px;">
+      <h1 style="margin:0;font-size:36px;letter-spacing:-.03em;font-weight:700;color:#fff;line-height:1.1;">Cart</h1>
+      <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px dashed rgba(148,163,184,.3);border-radius:18px;padding:48px 24px;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center;">
+          <span style="font-size:16px;color:#E5E7EB;">Your cart is empty.</span>
+          <button onClick="{{ goHome }}" style="height:44px;border:none;background:#10B981;color:#04140D;border-radius:11px;padding:0 20px;font-size:14px;font-weight:700;cursor:pointer;">Browse hardware</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ cartHas }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:22px;align-items:start;">
+          <div style="display:flex;flex-direction:column;gap:10px;grid-column:span 1;">
+            <sc-for list="{{ cartItems }}" as="c" hint-placeholder-count="2">
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;border:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.55);border-radius:14px;padding:14px 16px;">
+                <div style="min-width:0;display:flex;flex-direction:column;gap:3px;">
+                  <span style="font-size:16px;font-weight:600;color:#fff;">{{ c.name }}</span>
+                  <span style="font-size:12px;color:#94A3B8;">{{ c.keySpec }}</span>
+                </div>
+                <div style="display:flex;align-items:center;border:1px solid rgba(148,163,184,.25);border-radius:9px;height:36px;">
+                  <button onClick="{{ c.dec }}" style="width:32px;height:100%;border:none;background:none;color:#E5E7EB;font-size:16px;cursor:pointer;">−</button>
+                  <span style="min-width:22px;text-align:center;font-size:14px;">{{ c.qty }}</span>
+                  <button onClick="{{ c.inc }}" style="width:32px;height:100%;border:none;background:none;color:#E5E7EB;font-size:16px;cursor:pointer;">+</button>
+                </div>
+                <span style="font-weight:700;color:#10B981;white-space:nowrap;min-width:110px;text-align:right;">{{ c.lineText }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="border:1px solid rgba(16,185,129,.35);background:rgba(15,23,42,.65);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;">
+            <sc-for list="{{ cartSummary }}" as="l" hint-placeholder-count="3">
+              <div style="display:flex;justify-content:space-between;font-size:14px;color:#CBD5E1;"><span>{{ l.k }}</span><span style="font-family:'JetBrains Mono',monospace;">{{ l.v }}</span></div>
+            </sc-for>
+            <div style="height:1px;background:rgba(148,163,184,.15);"></div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:600;color:#fff;">Total</span><span style="font-size:24px;font-weight:700;color:#10B981;">{{ cartTotalText }}</span></div>
+            <button onClick="{{ goCheckout }}" style="height:50px;border:none;background:#10B981;color:#04140D;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 26px rgba(16,185,129,.3);" style-hover="background:#34D399;">Checkout</button>
+            <span style="font-size:12px;color:#94A3B8;text-align:center;">Buying for an institution? <a href="#" onClick="{{ goRfpLink }}">Request a quote instead</a></span>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isCheckout }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Checkout" style="max-width:1100px;margin:0 auto;padding:36px 24px 64px;display:flex;flex-direction:column;gap:22px;">
+      <sc-if value="{{ orderPlaced }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:560px;margin:40px auto;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center;border:1px solid rgba(16,185,129,.4);background:rgba(16,185,129,.06);border-radius:22px;padding:40px 28px;">
+          <span style="width:56px;height:56px;border-radius:99px;background:#10B981;color:#04140D;display:grid;place-items:center;font-size:28px;font-weight:700;box-shadow:0 0 30px rgba(16,185,129,.5);">✓</span>
+          <h2 style="margin:0;font-size:28px;color:#fff;letter-spacing:-.02em;">Order received</h2>
+          <span style="font-family:'JetBrains Mono',monospace;color:#6EE7B7;">{{ orderNo }}</span>
+          <span style="color:#94A3B8;font-size:15px;line-height:1.6;">{{ orderMsg }}</span>
+          <button onClick="{{ goHome }}" style="height:44px;border:none;background:#10B981;color:#04140D;border-radius:11px;padding:0 20px;font-size:14px;font-weight:700;cursor:pointer;">Continue shopping</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ orderOpen }}" hint-placeholder-val="{{ true }}">
+        <h1 style="margin:0;font-size:36px;letter-spacing:-.03em;font-weight:700;color:#fff;line-height:1.1;">Checkout</h1>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:22px;align-items:start;">
+          <div style="display:flex;flex-direction:column;gap:18px;">
+            <div style="border:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.55);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;color:#06B6D4;">01 · DELIVERY</span>
+              <input value="{{ co.name }}" onChange="{{ co.onName }}" placeholder="Full name" style="height:46px;padding:0 14px;background:rgba(11,15,25,.7);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;outline:none;" style-focus="border-color:#6366F1;box-shadow:0 0 0 3px rgba(99,102,241,.2);"></input>
+              <input value="{{ co.phone }}" onChange="{{ co.onPhone }}" placeholder="Phone, e.g. 0712 345 678" style="height:46px;padding:0 14px;background:rgba(11,15,25,.7);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;outline:none;" style-focus="border-color:#6366F1;box-shadow:0 0 0 3px rgba(99,102,241,.2);"></input>
+              <input value="{{ co.address }}" onChange="{{ co.onAddress }}" placeholder="Delivery address, town" style="height:46px;padding:0 14px;background:rgba(11,15,25,.7);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;outline:none;" style-focus="border-color:#6366F1;box-shadow:0 0 0 3px rgba(99,102,241,.2);"></input>
+            </div>
+            <div style="border:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.55);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;color:#06B6D4;">02 · PAYMENT · M-PESA</span>
+              <div style="border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.06);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;">
+                <sc-for list="{{ payLines }}" as="l" hint-placeholder-count="3">
+                  <div style="display:flex;justify-content:space-between;gap:10px;font-size:14px;"><span style="color:#94A3B8;">{{ l.k }}</span><span style="color:#fff;font-weight:600;font-family:'JetBrains Mono',monospace;text-align:right;">{{ l.v }}</span></div>
+                </sc-for>
+              </div>
+              <span style="font-size:13px;line-height:1.55;color:#94A3B8;">{{ payHelp }}</span>
+              <input value="{{ co.code }}" onChange="{{ co.onCode }}" placeholder="M-Pesa code, if you've already paid (optional)" style="height:46px;padding:0 14px;background:rgba(11,15,25,.7);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;font-family:'JetBrains Mono',monospace;outline:none;" style-focus="border-color:#10B981;box-shadow:0 0 0 3px rgba(16,185,129,.2);"></input>
+            </div>
+          </div>
+          <div style="border:1px solid rgba(16,185,129,.35);background:rgba(15,23,42,.65);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;color:#6EE7B7;">ORDER SUMMARY</span>
+            <sc-for list="{{ cartItems }}" as="c" hint-placeholder-count="2">
+              <div style="display:flex;justify-content:space-between;gap:10px;font-size:14px;color:#CBD5E1;"><span>{{ c.qty }} × {{ c.name }}</span><span style="font-family:'JetBrains Mono',monospace;white-space:nowrap;">{{ c.lineText }}</span></div>
+            </sc-for>
+            <div style="height:1px;background:rgba(148,163,184,.15);"></div>
+            <sc-for list="{{ cartSummary }}" as="l" hint-placeholder-count="3">
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#94A3B8;"><span>{{ l.k }}</span><span style="font-family:'JetBrains Mono',monospace;">{{ l.v }}</span></div>
+            </sc-for>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:600;color:#fff;">Total</span><span style="font-size:24px;font-weight:700;color:#10B981;">{{ cartTotalText }}</span></div>
+            <sc-if value="{{ coError }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:13px;color:#FCA5A5;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:9px;padding:9px 12px;">{{ coError }}</div>
+            </sc-if>
+            <sc-if value="{{ stkPending }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:13px;color:#6EE7B7;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.35);border-radius:9px;padding:10px 12px;display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:99px;background:#10B981;animation:nxPulse 1s infinite;"></span>{{ stkMsg }}</div>
+            </sc-if>
+            <button onClick="{{ placeOrder }}" style="height:50px;border:none;background:#10B981;color:#04140D;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 26px rgba(16,185,129,.3);" style-hover="background:#34D399;">{{ payCta }}</button>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isRfp }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="RFP builder" style="max-width:1200px;margin:0 auto;padding:36px 24px 64px;display:flex;flex-direction:column;gap:22px;">
+      <sc-if value="{{ rfpDone }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:580px;margin:40px auto;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center;border:1px solid rgba(99,102,241,.45);background:rgba(99,102,241,.07);border-radius:22px;padding:40px 28px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#A5B4FC;letter-spacing:.1em;">REQUEST RECEIVED</span>
+          <h2 style="margin:0;font-size:28px;color:#fff;letter-spacing:-.02em;">{{ rfpRef }}</h2>
+          <span style="color:#94A3B8;font-size:15px;line-height:1.6;">{{ rfpDoneMsg }}</span>
+          <button onClick="{{ newRfp }}" style="height:44px;border:1px solid rgba(99,102,241,.5);background:transparent;color:#C7D2FE;border-radius:11px;padding:0 20px;font-size:14px;font-weight:600;cursor:pointer;">Start another request</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ rfpOpen }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;color:#A5B4FC;">ENTERPRISE QUOTATION</span>
+          <h1 style="margin:0;font-size:clamp(30px,3.6vw,42px);letter-spacing:-.03em;font-weight:700;color:#fff;line-height:1.1;">Build your request for proposal</h1>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:22px;align-items:start;">
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="border:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.55);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;color:#A5B4FC;">01 · INSTITUTION</span>
+              <input value="{{ rfp.org }}" onChange="{{ rfp.onOrg }}" placeholder="Organisation name" style="height:46px;padding:0 14px;background:rgba(11,15,25,.7);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;outline:none;" style-focus="border-color:#6366F1;box-shadow:0 0 0 3px rgba(99,102,241,.2);"></input>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <sc-for list="{{ orgTypes }}" as="o" hint-placeholder-count="5">
+                  <button onClick="{{ o.pick }}" style="height:34px;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};border-radius:99px;padding:0 14px;font-size:13px;font-weight:500;cursor:pointer;">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="border:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.55);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;color:#A5B4FC;">02 · SYSTEMS</span>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;">
+                <sc-for list="{{ rfpSystems }}" as="s" hint-placeholder-count="5">
+                  <button onClick="{{ s.toggle }}" style="text-align:left;border:1.5px solid {{ s.border }};background:{{ s.bg }};border-radius:12px;padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;color:#E5E7EB;">
+                    <span style="font-size:14px;font-weight:600;color:#fff;">{{ s.name }}</span>
+                    <span style="font-size:11px;color:#94A3B8;">{{ s.sector }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="border:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.55);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;color:#A5B4FC;">03 · SCALE &amp; DEPLOYMENT</span>
+              <label style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#CBD5E1;">
+                <span style="display:flex;justify-content:space-between;"><span>Users</span><span style="font-family:'JetBrains Mono',monospace;color:#fff;">{{ rfp.users }}</span></span>
+                <input type="range" min="10" max="2000" step="10" value="{{ rfp.users }}" onChange="{{ rfp.onUsers }}" style="accent-color:#6366F1;"></input>
+              </label>
+              <label style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#CBD5E1;">
+                <span style="display:flex;justify-content:space-between;"><span>Sites / branches</span><span style="font-family:'JetBrains Mono',monospace;color:#fff;">{{ rfp.sites }}</span></span>
+                <input type="range" min="1" max="30" step="1" value="{{ rfp.sites }}" onChange="{{ rfp.onSites }}" style="accent-color:#6366F1;"></input>
+              </label>
+              <div style="display:flex;gap:4px;padding:4px;border-radius:11px;background:rgba(11,15,25,.6);border:1px solid rgba(148,163,184,.15);">
+                <sc-for list="{{ deployOpts }}" as="d" hint-placeholder-count="3">
+                  <button onClick="{{ d.pick }}" style="flex:1;height:36px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:{{ d.bg }};color:{{ d.fg }};">{{ d.label }}</button>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <sc-for list="{{ addonOpts }}" as="a" hint-placeholder-count="4">
+                  <button onClick="{{ a.toggle }}" style="height:34px;border:1px solid {{ a.border }};background:{{ a.bg }};color:{{ a.fg }};border-radius:99px;padding:0 14px;font-size:13px;font-weight:500;cursor:pointer;">{{ a.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="border:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.55);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;color:#A5B4FC;">04 · CONTACT</span>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;">
+                <input value="{{ rfp.email }}" onChange="{{ rfp.onEmail }}" placeholder="Work email" style="height:46px;padding:0 14px;background:rgba(11,15,25,.7);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;outline:none;" style-focus="border-color:#6366F1;"></input>
+                <input value="{{ rfp.phone }}" onChange="{{ rfp.onPhone }}" placeholder="Phone" style="height:46px;padding:0 14px;background:rgba(11,15,25,.7);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;outline:none;" style-focus="border-color:#6366F1;"></input>
+              </div>
+              <textarea value="{{ rfp.notes }}" onChange="{{ rfp.onNotes }}" rows="3" placeholder="Requirements, integrations, timeline…" style="padding:12px 14px;background:rgba(11,15,25,.7);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;outline:none;resize:vertical;line-height:1.5;"></textarea>
+            </div>
+          </div>
+          <div style="position:sticky;top:88px;border:1px solid rgba(99,102,241,.45);background:rgba(15,23,42,.7);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 50px -20px rgba(99,102,241,.6);">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;color:#A5B4FC;">LIVE ESTIMATE</span>
+            <sc-if value="{{ estEmpty }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:14px;color:#94A3B8;line-height:1.5;">Select at least one system to see an estimate.</span>
+            </sc-if>
+            <sc-for list="{{ estLines }}" as="l" hint-placeholder-count="3">
+              <div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:#CBD5E1;"><span>{{ l.k }}</span><span style="font-family:'JetBrains Mono',monospace;white-space:nowrap;">{{ l.v }}</span></div>
+            </sc-for>
+            <div style="height:1px;background:rgba(148,163,184,.15);"></div>
+            <span style="font-size:12px;color:#94A3B8;">Estimated range, first year</span>
+            <span style="font-size:24px;font-weight:700;color:#fff;letter-spacing:-.01em;">{{ estRange }}</span>
+            <span style="font-size:12px;color:#94A3B8;line-height:1.5;">Final pricing follows a scoping call. Payment by invoice or bank transfer.</span>
+            <sc-if value="{{ rfpError }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:13px;color:#FCA5A5;">{{ rfpError }}</div>
+            </sc-if>
+            <button onClick="{{ submitRfp }}" style="height:50px;border:none;background:#6366F1;color:#fff;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 26px rgba(99,102,241,.45);" style-hover="background:#7C7FF5;">Submit RFP</button>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isStudio }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Vendor Studio" style="max-width:1320px;margin:0 auto;padding:32px 24px 64px;display:flex;flex-direction:column;gap:22px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:8px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;color:#06B6D4;">VENDOR STUDIO</span>
+          <h1 style="margin:0;font-size:clamp(30px,3.6vw,42px);line-height:1.1;letter-spacing:-.03em;font-weight:700;color:#fff;line-height:1.1;">Listings, media and ads</h1>
+        </div>
+        <div style="display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(15,23,42,.7);border:1px solid rgba(148,163,184,.15);">
+          <sc-for list="{{ studioTabs }}" as="t" hint-placeholder-count="2">
+            <button onClick="{{ t.pick }}" style="height:38px;border:none;border-radius:9px;padding:0 16px;font-size:14px;font-weight:600;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }};white-space:nowrap;">{{ t.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ stAssets }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:14px;color:#94A3B8;">Product</span>
+          <select value="{{ assetPid }}" onChange="{{ onAssetPid }}" style="height:42px;border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.8);color:#E5E7EB;border-radius:10px;padding:0 12px;font-size:14px;outline:none;">
+            <sc-for list="{{ productOpts }}" as="o" hint-placeholder-count="5">
+              <option value="{{ o.id }}">{{ o.name }}</option>
+            </sc-for>
+          </select>
+          <span style="font-size:13px;color:#94A3B8;white-space:nowrap;">{{ assetStatus }}</span>
+          <button onClick="{{ previewListing }}" style="margin-left:auto;height:40px;border:1px solid rgba(6,182,212,.5);background:rgba(6,182,212,.08);color:#A5F3FC;border-radius:10px;padding:0 14px;font-size:13px;font-weight:600;cursor:pointer;">Preview product page</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
+          <sc-for list="{{ assetSlots }}" as="s" hint-placeholder-count="7">
+            <label onDragOver="{{ s.onOver }}" onDrop="{{ s.onDrop }}" style="position:relative;aspect-ratio:1/1;border:1.5px dashed {{ s.border }};background:rgba(15,23,42,.55);border-radius:16px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;" style-hover="border-color:#6366F1;">
+              <input type="file" accept="{{ s.accept }}" onChange="{{ s.onFile }}" style="display:none;"></input>
+              <div style="flex:1;display:grid;place-items:center;position:relative;min-height:0;">
+                <sc-if value="{{ s.isImg }}" hint-placeholder-val="{{ false }}">
+                  <div role="img" aria-label="{{ s.label }}" style="position:absolute;inset:10px;background-image:{{ s.bgUrl }};background-size:contain;background-position:center;background-repeat:no-repeat;"></div>
+                </sc-if>
+                <sc-if value="{{ s.isVideo }}" hint-placeholder-val="{{ false }}">
+                  <video ref="{{ s.vidRef }}" autoplay="" muted="" loop="" playsinline="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;"></video>
+                </sc-if>
+                <sc-if value="{{ s.isModel }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;text-align:center;">
+                    <span style="width:44px;height:44px;border-radius:10px;transform:rotate(45deg);border:2px solid #06B6D4;box-shadow:0 0 16px rgba(6,182,212,.5);"></span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#A5F3FC;word-break:break-all;">{{ s.fileName }}</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ s.empty }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px;text-align:center;">
+                    <span style="font-size:26px;color:#6366F1;line-height:1;">+</span>
+                    <span style="font-size:12px;color:#94A3B8;">{{ s.hint }}</span>
+                  </div>
+                </sc-if>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid rgba(148,163,184,.12);background:rgba(11,15,25,.6);">
+                <span style="flex:1 0 auto;font-size:13px;font-weight:600;color:#fff;white-space:nowrap;">{{ s.label }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:{{ s.statusColor }};white-space:nowrap;flex-shrink:0;">{{ s.status }}</span>
+              </div>
+            </label>
+          </sc-for>
+        </div>
+        <span style="font-size:13px;color:#94A3B8;line-height:1.55;">Photos and GIF/WebM appear in the product page's 360° tab. A .glb model replaces the built-in 3D model; exploded view spreads its parts automatically.</span>
+      </sc-if>
+
+      <sc-if value="{{ stVideo }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:22px;align-items:start;">
+          <div style="border:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.6);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;color:#A5B4FC;">AI VIDEO AD GENERATOR</span>
+            <select value="{{ studio.pid }}" onChange="{{ onStudioPid }}" style="height:44px;border:1px solid rgba(148,163,184,.25);background:rgba(11,15,25,.8);color:#E5E7EB;border-radius:10px;padding:0 12px;font-size:14px;outline:none;">
+              <sc-for list="{{ productOpts }}" as="o" hint-placeholder-count="5">
+                <option value="{{ o.id }}">{{ o.name }}</option>
+              </sc-for>
+            </select>
+            <textarea value="{{ studio.prompt }}" onChange="{{ onStudioPrompt }}" rows="3" placeholder="Describe the ad, e.g. Launch ad for students, focus on battery and camera" style="padding:12px 14px;background:rgba(11,15,25,.7);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;outline:none;resize:vertical;line-height:1.5;" style-focus="border-color:#6366F1;"></textarea>
+            <button onClick="{{ generateAd }}" style="height:46px;border:none;background:linear-gradient(90deg,#6366F1,#06B6D4);color:#fff;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 0 26px rgba(99,102,241,.4);">{{ generateLabel }}</button>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <span style="font-size:12px;color:#94A3B8;">Headline</span>
+              <input value="{{ studio.name }}" onChange="{{ onStudioName }}" style="height:42px;padding:0 12px;background:rgba(11,15,25,.7);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;outline:none;"></input>
+              <span style="font-size:12px;color:#94A3B8;">Spec lines</span>
+              <sc-for list="{{ studioSpecs }}" as="sp" hint-placeholder-count="3">
+                <input value="{{ sp.v }}" onChange="{{ sp.on }}" placeholder="{{ sp.ph }}" style="height:42px;padding:0 12px;background:rgba(11,15,25,.7);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;font-family:'JetBrains Mono',monospace;outline:none;"></input>
+              </sc-for>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <span style="font-size:12px;color:#94A3B8;">Format</span>
+                <div style="display:flex;gap:4px;padding:3px;border-radius:9px;background:rgba(11,15,25,.6);border:1px solid rgba(148,163,184,.15);">
+                  <sc-for list="{{ formatOpts }}" as="f" hint-placeholder-count="3">
+                    <button onClick="{{ f.pick }}" style="flex:1;height:32px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:{{ f.bg }};color:{{ f.fg }};">{{ f.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <span style="font-size:12px;color:#94A3B8;">Style</span>
+                <div style="display:flex;gap:4px;padding:3px;border-radius:9px;background:rgba(11,15,25,.6);border:1px solid rgba(148,163,184,.15);">
+                  <sc-for list="{{ styleOpts }}" as="f" hint-placeholder-count="2">
+                    <button onClick="{{ f.pick }}" style="flex:1;height:32px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:{{ f.bg }};color:{{ f.fg }};">{{ f.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;align-items:center;">
+            <div style="width:100%;display:grid;place-items:center;border:1px solid rgba(99,102,241,.3);border-radius:18px;background:rgba(11,15,25,.6);padding:18px;min-height:420px;">
+              <div style="position:relative;width:{{ previewW }};aspect-ratio:{{ previewAR }};max-height:560px;border-radius:12px;overflow:hidden;box-shadow:0 0 50px -16px rgba(99,102,241,.7);">
+                <canvas ref="{{ studioAdRef }}" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+              <button onClick="{{ exportAd }}" style="height:44px;border:none;background:#10B981;color:#04140D;border-radius:11px;padding:0 18px;font-size:14px;font-weight:700;cursor:pointer;" style-hover="background:#34D399;">{{ exportLabel }}</button>
+              <button onClick="{{ attachAd }}" style="height:44px;border:1px solid rgba(99,102,241,.5);background:rgba(99,102,241,.12);color:#C7D2FE;border-radius:11px;padding:0 18px;font-size:14px;font-weight:600;cursor:pointer;">Use on product card</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+  </sc-if>
+  </main>
+
+  <footer style="border-top:1px solid rgba(148,163,184,.12);">
+    <div style="max-width:1320px;margin:0 auto;padding:24px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;color:#94A3B8;">
+      <span>Nonix Shop · Hardware and enterprise systems by <a href="/">NonixTech</a></span>
+      <span>Prices in KES · Pay with M-Pesa · <a href="tel:+254724171555">+254 724 171 555</a></span>
+    </div>
+  </footer>
+</div>
+
+<sc-if value="{{ chatClosed }}" hint-placeholder-val="{{ true }}">
+  <button onClick="{{ openChat }}" style="position:fixed;right:20px;bottom:20px;z-index:50;height:52px;border:1px solid rgba(6,182,212,.55);background:rgba(11,15,25,.9);color:#fff;border-radius:99px;padding:0 20px 0 14px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 0 30px rgba(6,182,212,.35);backdrop-filter:blur(10px);">
+    <span style="width:26px;height:26px;border-radius:99px;background:linear-gradient(135deg,#6366F1,#06B6D4);box-shadow:0 0 12px rgba(99,102,241,.7);"></span>Ask sales
+  </button>
+</sc-if>
+<sc-if value="{{ chatOpen }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="AI assistant" style="position:fixed;right:20px;bottom:20px;z-index:50;width:min(400px,calc(100vw - 40px));height:min(580px,calc(100vh - 100px));display:flex;flex-direction:column;background:rgba(11,15,25,.94);border:1px solid rgba(99,102,241,.45);border-radius:20px;box-shadow:0 20px 70px -10px rgba(0,0,0,.6),0 0 40px -10px rgba(99,102,241,.6);backdrop-filter:blur(16px);overflow:hidden;">
+    <div style="height:56px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid rgba(148,163,184,.12);">
+      <span style="width:26px;height:26px;border-radius:99px;background:linear-gradient(135deg,#6366F1,#06B6D4);"></span>
+      <div style="display:flex;flex-direction:column;flex:1;">
+        <span style="font-size:14px;font-weight:600;color:#fff;">Nonix sales</span>
+        <span style="font-size:11px;color:#6EE7B7;">{{ chatStatus }}</span>
+      </div>
+      <button onClick="{{ closeChat }}" style="border:none;background:rgba(148,163,184,.12);width:30px;height:30px;border-radius:8px;color:#E5E7EB;font-size:16px;cursor:pointer;">×</button>
+    </div>
+    <div ref="{{ chatScrollRef }}" style="flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px;">
+      <sc-for list="{{ chatMsgs }}" as="m" hint-placeholder-count="2">
+        <div style="display:flex;justify-content:{{ m.justify }};">
+          <div style="max-width:86%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.55;white-space:pre-wrap;background:{{ m.bg }};color:{{ m.fg }};border:1px solid {{ m.border }};">{{ m.text }}</div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ chatBusy }}" hint-placeholder-val="{{ false }}">
+        <span style="font-size:12px;color:#94A3B8;font-family:'JetBrains Mono',monospace;animation:nxPulse 1s infinite;">thinking…</span>
+      </sc-if>
+      <sc-if value="{{ showChatSuggest }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <sc-for list="{{ chatSuggest }}" as="s" hint-placeholder-count="3">
+            <button onClick="{{ s.use }}" style="text-align:left;border:1px solid rgba(99,102,241,.35);background:rgba(99,102,241,.08);color:#C7D2FE;border-radius:10px;padding:9px 12px;font-size:13px;cursor:pointer;">{{ s.text }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+    <div style="flex-shrink:0;padding:10px;border-top:1px solid rgba(148,163,184,.12);display:flex;gap:8px;">
+      <input value="{{ chatInput }}" onChange="{{ onChatInput }}" onKeyDown="{{ onChatKey }}" placeholder="Ask about a product or system…" style="flex:1;min-width:0;height:42px;padding:0 12px;background:rgba(15,23,42,.8);border:1px solid rgba(148,163,184,.22);border-radius:10px;color:#E5E7EB;font-size:14px;outline:none;" style-focus="border-color:#6366F1;"></input>
+      <button onClick="{{ sendChat }}" style="height:42px;border:none;background:#6366F1;color:#fff;border-radius:10px;padding:0 14px;font-size:13px;font-weight:600;cursor:pointer;">Send</button>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;background:#111827;border:1px solid rgba(16,185,129,.5);color:#E5E7EB;font-size:14px;padding:11px 18px;border-radius:11px;box-shadow:0 0 30px rgba(16,185,129,.25);">{{ toast }}</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;homeLayout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;split&quot;,&quot;stage&quot;,&quot;catalog&quot;],&quot;default&quot;:&quot;split&quot;,&quot;tsType&quot;:&quot;'split'|'stage'|'catalog'&quot;,&quot;section&quot;:&quot;Home&quot;},&quot;adStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;blueprint&quot;,&quot;kinetic&quot;],&quot;default&quot;:&quot;blueprint&quot;,&quot;tsType&quot;:&quot;'blueprint'|'kinetic'&quot;,&quot;section&quot;:&quot;Spec ads&quot;}}">
+class Component extends DCLogic {
+  // Firebase project "nonixtech". These web keys are public by design; access is controlled by firestore.rules.
+  FB = { apiKey: 'AIzaSyDVrbRjnrgtoxBCwbLHT3yd8gkH5WQmHzo', authDomain: 'nonixtech.firebaseapp.com', projectId: 'nonixtech', appId: '1:205776166726:web:ec7611f4f312b075024f47' };
+  // Built-in sample catalogue, shown until the products in Firestore load (or if they can't).
+  P = [
+    { id: 'ip16pro', name: 'iPhone 16 Pro', type: 'Smartphone', model: 'phone', price: 189999, accent: '#6366F1', specs: ['A18 Pro chip', '8GB RAM | 256GB', '48MP Fusion camera'], keySpec: 'A18 Pro · 8GB RAM · 256GB', blurb: '6.3-inch Super Retina XDR display, titanium frame and a 48MP Fusion camera with 5x telephoto.',
+      rows: [['Display', '6.3" Super Retina XDR, ProMotion 120 Hz'], ['Chip', 'A18 Pro, 6-core CPU'], ['Memory', '8 GB RAM · 256 GB'], ['Camera', '48 MP Fusion · 48 MP Ultra Wide · 12 MP 5x'], ['Frame', 'Grade 5 titanium'], ['Network', '5G · Wi-Fi 7 · USB-C']],
+      labels: { display: '6.3" XDR display', soc: 'A18 Pro chip', ram: '8 GB RAM', storage: '256 GB storage', battery: 'Li-ion battery', camera: '48 MP camera', back: 'Titanium back', board: 'Logic board' } },
+    { id: 'ip16', name: 'iPhone 16', type: 'Smartphone', model: 'phone', price: 134999, accent: '#06B6D4', specs: ['A18 chip', '8GB RAM | 128GB', 'Camera Control'], keySpec: 'A18 · 8GB RAM · 128GB', blurb: '6.1-inch display, A18 chip, Camera Control button and a 48MP Fusion camera.',
+      rows: [['Display', '6.1" Super Retina XDR'], ['Chip', 'A18, 6-core CPU'], ['Memory', '8 GB RAM · 128 GB'], ['Camera', '48 MP Fusion · 12 MP Ultra Wide'], ['Battery', 'Up to 22 h video playback'], ['Network', '5G · Wi-Fi 7 · USB-C']],
+      labels: { display: '6.1" XDR display', soc: 'A18 chip', ram: '8 GB RAM', storage: '128 GB storage', camera: '48 MP camera' } },
+    { id: 'ip15', name: 'iPhone 15', type: 'Smartphone', model: 'phone', price: 109999, accent: '#10B981', specs: ['A16 Bionic', '6GB RAM | 128GB', 'Dynamic Island'], keySpec: 'A16 Bionic · 6GB RAM · 128GB', blurb: '6.1-inch display with Dynamic Island, A16 Bionic and a 48MP main camera.',
+      rows: [['Display', '6.1" Super Retina XDR'], ['Chip', 'A16 Bionic'], ['Memory', '6 GB RAM · 128 GB'], ['Camera', '48 MP main · 12 MP Ultra Wide'], ['Battery', 'Up to 20 h video playback'], ['Network', '5G · Wi-Fi 6 · USB-C']],
+      labels: { display: '6.1" XDR display', soc: 'A16 Bionic', ram: '6 GB RAM', storage: '128 GB storage', camera: '48 MP camera' } },
+    { id: 'aero14', name: 'AeroBook 14', type: 'Laptop', model: 'laptop', price: 124000, accent: '#06B6D4', specs: ['Core i7 · 13th Gen', '16GB RAM | 512GB SSD', '14" 2.8K OLED'], keySpec: 'Core i7 · 16GB · 512GB SSD', blurb: 'Thin 14-inch work laptop with a 2.8K OLED panel and all-day battery.',
+      rows: [['Display', '14" 2.8K OLED, 90 Hz'], ['CPU', 'Intel Core i7-1360P'], ['Memory', '16 GB LPDDR5 · 512 GB NVMe'], ['Battery', '72 Wh'], ['Weight', '1.29 kg'], ['Ports', '2× USB-C · HDMI · USB-A']],
+      labels: { display: '14" 2.8K OLED', cpu: 'Core i7-1360P', ram: '16 GB LPDDR5', ssd: '512 GB NVMe', battery: '72 Wh battery', fan: 'Cooling fan', deck: 'Keyboard deck', bottom: 'Bottom case', board: 'Motherboard' } },
+    { id: 'coremini', name: 'Core Mini X', type: 'Mini PC', model: 'minipc', price: 89900, accent: '#6366F1', specs: ['Ryzen 7 · 8 cores', '32GB DDR5 | 1TB NVMe', 'Wi-Fi 6E · 2.5G LAN'], keySpec: 'Ryzen 7 · 32GB · 1TB NVMe', blurb: 'Palm-sized desktop for offices, POS back-ends and edge AI workloads.',
+      rows: [['CPU', 'AMD Ryzen 7, 8 cores / 16 threads'], ['Memory', '32 GB DDR5 · 1 TB NVMe Gen4'], ['Graphics', 'Radeon 780M'], ['Network', 'Wi-Fi 6E · 2.5G LAN'], ['Ports', 'USB4 · 2× HDMI · 4× USB-A'], ['Size', '13 × 13 × 5 cm']],
+      labels: { cpu: 'Ryzen 7 + cooler', ram: '32 GB DDR5', ssd: '1 TB NVMe', wifi: 'Wi-Fi 6E', top: 'Top cover', board: 'Mainboard' } }
+  ];
+  SW = [
+    { id: 'pos', name: 'Nonix POS', sector: 'Retail & distribution', color: '#10B981', base: 180000, perUser: 2500, desc: 'Point of sale, stock and M-Pesa reconciliation across branches.', modules: ['Sales', 'Stock', 'M-Pesa', 'Branches'], chart: 'Sales per hour (KES K)',
+      kpis: [['Today\u2019s sales', 412000, 'kes'], ['Transactions', 1284], ['Low-stock SKUs', 17], ['Branches online', '6/6']],
+      rows: [['Till 03 · Westlands', 'KES 48,200', 'Open'], ['Till 01 · CBD', 'KES 61,950', 'Open'], ['M-Pesa batch 14:00', '212 txns', 'Matched'], ['Stock transfer #881', '40 cartons', 'Pending']] },
+    { id: 'school', name: 'Campus ERP', sector: 'Schools & colleges', color: '#6366F1', base: 350000, perUser: 400, desc: 'Admissions, fees, timetables, exams and a parent portal.', modules: ['Students', 'Fees', 'Exams', 'Parents'], chart: 'Fee payments this week',
+      kpis: [['Students', 2418], ['Fees collected', '78%'], ['Attendance', '94.2%'], ['Unpaid invoices', 312]],
+      rows: [['Form 3 East · CAT 2', '42 students', 'Marked'], ['Fee reminder batch', '312 parents', 'Sent'], ['Admission #2026-0418', 'Grade 7', 'Review'], ['Timetable · Term 3', 'v4', 'Published']] },
+    { id: 'hms', name: 'CarePoint HMS', sector: 'Hospitals & clinics', color: '#06B6D4', base: 650000, perUser: 3000, desc: 'Patient records, pharmacy, lab, billing and insurance claims.', modules: ['Patients', 'Pharmacy', 'Lab', 'Billing'], chart: 'Patient visits by hour',
+      kpis: [['Patients today', 186], ['Beds occupied', '71/90'], ['Lab pending', 23], ['Claims submitted', 1900000, 'kes']],
+      rows: [['OPD queue · Room 4', '12 waiting', 'Busy'], ['Lab · CBC #7731', 'Sample in', 'Pending'], ['SHA claim batch', 'KES 412K', 'Submitted'], ['Pharmacy restock', 'Amoxicillin', 'Low']] },
+    { id: 'farm', name: 'AgriSense IoT', sector: 'Farms & agribusiness', color: '#10B981', base: 240000, perUser: 0, desc: 'Soil, weather and irrigation sensors with alerts to your phone.', modules: ['Fields', 'Irrigation', 'Weather', 'Alerts'], chart: 'Soil moisture, last 12 h (%)',
+      kpis: [['Soil moisture', '32%'], ['Sensors online', '48/50'], ['Water today', '12.4 m³'], ['Active alerts', 2]],
+      rows: [['Block A · Maize', '31% moisture', 'OK'], ['Block C · Avocado', '19% moisture', 'Low'], ['Pump 2', 'Running 42 min', 'On'], ['Sensor S-17', 'No signal', 'Offline']] },
+    { id: 'ai', name: 'Pipeline AI Agents', sector: 'Data & automation', color: '#6366F1', base: 500000, perUser: 1500, desc: 'Data pipelines and AI agents that read documents, answer staff and automate reports.', modules: ['Pipelines', 'Agents', 'Sources', 'Runs'], chart: 'Agent runs per hour',
+      kpis: [['Runs today', 3902], ['Success rate', '99.1%'], ['Docs processed', 18440], ['Avg latency', '1.8 s']],
+      rows: [['Invoice extractor', '1,204 docs', 'Healthy'], ['Sales report agent', 'Daily 07:00', 'Done'], ['ERP sync · Sage', 'Every 15 min', 'Healthy'], ['Support triage bot', '86 chats', 'Running']] }
+  ];
+  viewers = {}; adEls = new Map(); adStart = {}; adRefCache = {}; photoReq = {};
+  chatScrollRef = React.createRef(); hardwareRef = React.createRef();
+  state = {
+    view: 'home', pid: 'ip16pro', mode: 'assembled', mediaTab: '3d', qty: 1, photoIdx: 0,
+    heroMode: 'auto', cart: [], rfpSel: [], toast: '', catalogV: 0,
+    shop: { mpesaType: 'till', mpesaNumber: '', mpesaName: 'NonixTech', phone: '+254 724 171 555', whatsapp: '254724171555' },
+    swId: 'pos', demoMod: 0, live: 0,
+    co: { name: '', phone: '', address: '', code: '' }, coError: '', saving: false, placed: null,
+    rfp: { org: '', type: 'School', users: 150, sites: 1, deploy: 'Cloud', addons: ['Training'], email: '', phone: '', notes: '' }, rfpError: '', rfpRef: null,
+    studioTab: 'assets', assetPid: 'ip16pro', assets: {}, adOverrides: {},
+    studio: { pid: 'ip16pro', prompt: '', name: 'iPhone 16 Pro', specs: ['A18 Pro chip', '8GB RAM | 256GB', '48MP Fusion camera'], format: '1:1', style: 'blueprint', busy: false, rec: false },
+    chatOpen: false, chatBusy: false, chatInput: '', chat: [{ role: 'ai', text: 'Hi, this is Nonix sales. Ask us to compare phones, size a system for your school or hospital, or explain what\u2019s inside a device.' }]
+  };
+
+  componentDidMount() {
+    this.loadThree();
+    try { const c = JSON.parse(localStorage.getItem('nonixCart') || '[]'); if (Array.isArray(c) && c.length) this.setState({ cart: c.filter(x => x && typeof x.id === 'string' && x.qty > 0) }); } catch (e) {}
+    this.loadShop();
+    const loop = now => { this.drawAds(now); this.raf = requestAnimationFrame(loop); };
+    this.raf = requestAnimationFrame(loop);
+    this.tick = setInterval(() => { if (this.state.view === 'enterprise') this.setState(s => ({ live: s.live + 1 })); }, 1600);
+  }
+  componentWillUnmount() { cancelAnimationFrame(this.raf); clearInterval(this.tick); Object.values(this.viewers).forEach(v => v && v.dispose()); }
+  componentDidUpdate() {
+    // The dc runtime passes only prevProps, so remember the previous state values ourselves.
+    const s = this.state, ps = this._prev || {}; this._prev = { chat: s.chat, chatBusy: s.chatBusy, chatOpen: s.chatOpen, cart: s.cart };
+    this.syncViewers();
+    const el = this.chatScrollRef.current;
+    if (el && (ps.chat !== s.chat || ps.chatBusy !== s.chatBusy || ps.chatOpen !== s.chatOpen)) el.scrollTop = el.scrollHeight;
+    if (ps.cart !== s.cart) { try { localStorage.setItem('nonixCart', JSON.stringify(s.cart)); } catch (e) {} }
+  }
+  db() {
+    if (this._db) return this._db;
+    const b = 'https://www.gstatic.com/firebasejs/10.12.2/';
+    this._db = (async () => {
+      if (!window.firebase) await this.loadScript(b + 'firebase-app-compat.js');
+      if (!window.firebase.firestore) await this.loadScript(b + 'firebase-firestore-compat.js');
+      return (firebase.apps.length ? firebase.app() : firebase.initializeApp(this.FB)).firestore();
+    })().catch(e => { console.warn('Firebase failed to load', e); this._db = null; return null; });
+    return this._db;
+  }
+  fromDoc(id, d) {
+    return { id, name: d.name || 'Untitled', type: d.type || 'Product', model: d.model || 'phone', price: Number(d.price) || 0, accent: d.accent || '#6366F1',
+      specs: (d.specs || []).filter(Boolean), keySpec: d.keySpec || '', blurb: d.blurb || '', rows: (d.rows || []).map(r => [r.k, r.v]), labels: d.labels || {}, sort: Number(d.sort) || 0 };
+  }
+  async loadShop() {
+    const db = await this.db(); if (!db) return;
+    try {
+      const [ps, st] = await Promise.all([db.collection('products').where('active', '==', true).get(), db.doc('settings/shop').get()]);
+      const list = ps.docs.map(d => this.fromDoc(d.id, d.data())).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
+      if (list.length) this.P = list;
+      const hv = this.viewers.hero; if (hv) { hv.kind = this.P[0].model; hv.labels = this.P[0].labels; hv.dirty = true; }
+      this.setState(s => ({ catalogV: s.catalogV + 1, shop: st.exists ? { ...s.shop, ...st.data() } : s.shop,
+        cart: s.cart.filter(c => this.P.some(p => p.id === c.id)), pid: this.P.some(p => p.id === s.pid) ? s.pid : this.P[0].id }));
+      if (this.state.view === 'product') this.loadPhotos(this.state.pid);
+    } catch (e) { console.warn('Could not load products', e); }
+  }
+  async loadPhotos(pid) {
+    if (!pid || this.photoReq[pid]) return; this.photoReq[pid] = true;
+    const db = await this.db(); if (!db) return;
+    try {
+      const d = await db.doc('productPhotos/' + pid).get(); if (!d.exists) return;
+      const ph = d.data(), a = {};
+      ['front', 'right', 'back', 'left', 'top'].forEach(k => { if (ph[k]) a[k] = { url: ph[k], name: k, isVideo: false }; });
+      if (Object.keys(a).length) this.setState(s => ({ assets: { ...s.assets, [pid]: { ...a, ...(s.assets[pid] || {}) } } }));
+    } catch (e) { this.photoReq[pid] = false; }
+  }
+  async save(col, id, data) {
+    const db = await this.db(); if (!db) throw new Error('Firebase unavailable');
+    await db.collection(col).doc(id).set({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+  }
+  loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.async = false; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+  async loadThree() {
+    if (window.__nxThree) return window.__nxThree;
+    const b = 'https://unpkg.com/three@0.147.0/';
+    window.__nxThree = (async () => {
+      if (!window.THREE) await this.loadScript(b + 'build/three.min.js');
+      if (!window.THREE.OrbitControls) await this.loadScript(b + 'examples/js/controls/OrbitControls.js');
+      if (!window.THREE.GLTFLoader) await this.loadScript(b + 'examples/js/loaders/GLTFLoader.js').catch(() => {});
+    })().catch(e => { console.warn('three.js failed to load', e); window.__nxThree = null; });
+    return window.__nxThree;
+  }
+  product(id) { return this.P.find(p => p.id === (id || this.state.pid)) || this.P[0]; }
+  kes(n) { return 'KES ' + Math.round(n).toLocaleString('en-KE'); }
+  flash(t) { this.setState({ toast: t }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 2400); }
+  go(view, extra) { this.setState({ view, ...(extra || {}) }); window.scrollTo(0, 0); if (view === 'product') this.loadPhotos((extra && extra.pid) || this.state.pid); }
+  addToCart(id, q) { this.setState(s => { const ex = s.cart.find(c => c.id === id); return { cart: ex ? s.cart.map(c => c.id === id ? { ...c, qty: c.qty + q } : c) : [...s.cart, { id, qty: q }] }; }); this.flash(this.product(id).name + ' added to cart'); }
+  toggleRfp(id) { this.setState(s => ({ rfpSel: s.rfpSel.includes(id) ? s.rfpSel.filter(x => x !== id) : [...s.rfpSel, id] })); }
+
+  syncViewers() {
+    const hv = this.viewers.hero;
+    if (hv) { hv.cycle = this.state.heroMode === 'auto'; if (!hv.cycle) hv.mode = this.state.heroMode; }
+    const pv = this.viewers.product;
+    if (pv) {
+      pv.mode = this.state.mode;
+      const p = this.product(); const a = (this.state.assets[p.id] || {}).model;
+      const key = p.id + (a ? ':' + a.name : '');
+      if (pv.key !== key) { pv.key = key; pv.kind = p.model; pv.labels = p.labels; pv.gltf = a ? a.buf : null; pv.dirty = true; }
+    }
+  }
+  heroRef = el => {
+    if (el) { const v = this.makeViewer(el, { auto: true, interactive: false }); const p = this.P[0]; v.kind = p.model; v.labels = p.labels; v.dirty = true; this.viewers.hero = v; this.syncViewers(); }
+    else if (this.viewers.hero) { this.viewers.hero.dispose(); this.viewers.hero = null; }
+  };
+  productRef = el => {
+    if (el) { this.viewers.product = this.makeViewer(el, { auto: false, interactive: true }); this.syncViewers(); }
+    else if (this.viewers.product) { this.viewers.product.dispose(); this.viewers.product = null; }
+  };
+
+  makeViewer(el, opts) {
+    const api = { mode: 'assembled', kind: 'phone', labels: {}, gltf: null, dirty: false, cycle: false, alive: true, reset: () => {}, dispose() { api.alive = false; if (api._cleanup) api._cleanup(); } };
+    this.loadThree().then(() => {
+      if (!api.alive) return;
+      const T = window.THREE; if (!T || !T.OrbitControls) return;
+      let W = el.clientWidth || 600, H = el.clientHeight || 400;
+      const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.setSize(W, H);
+      if (T.sRGBEncoding) renderer.outputEncoding = T.sRGBEncoding;
+      const cv = renderer.domElement;
+      cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;outline:none;cursor:grab;touch-action:' + (opts.interactive ? 'none' : 'pan-y') + ';';
+      el.appendChild(cv);
+      const layer = document.createElement('div'); layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden;'; el.appendChild(layer);
+      const scene = new T.Scene();
+      const camera = new T.PerspectiveCamera(34, W / H, 0.1, 100);
+      const controls = new T.OrbitControls(camera, cv);
+      controls.enableDamping = true; controls.dampingFactor = 0.08; controls.enableZoom = !!opts.interactive; controls.enablePan = !!opts.interactive;
+      controls.autoRotate = !!opts.auto; controls.autoRotateSpeed = 1.1; controls.minDistance = 3; controls.maxDistance = 16;
+      let camHome = new T.Vector3(4, 3, 6.5), tgtHome = new T.Vector3(0, 0.5, 0);
+      api.reset = () => { camera.position.copy(camHome); controls.target.copy(tgtHome); };
+      scene.add(new T.HemisphereLight(0xc7d2fe, 0x0b0f19, 0.8));
+      const key = new T.DirectionalLight(0xffffff, 1.2); key.position.set(4, 7, 5); scene.add(key);
+      const fill = new T.DirectionalLight(0x9aa5ff, 0.4); fill.position.set(-4, 2, 6); scene.add(fill);
+      const pv = new T.PointLight(0x6366f1, 2.4, 22); pv.position.set(-5, 2.5, -3); scene.add(pv);
+      const pc = new T.PointLight(0x06b6d4, 2, 22); pc.position.set(5, 1.5, -4); scene.add(pc);
+      const ring = new T.Mesh(new T.RingGeometry(2.7, 2.74, 128), new T.MeshBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.5, side: T.DoubleSide }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = -0.62; scene.add(ring);
+      const grid = new T.GridHelper(14, 28, 0x1f2a44, 0x131b2c); grid.position.y = -0.63; scene.add(grid);
+      let group = null, parts = [];
+      const clear = () => { if (group) { scene.remove(group); group.traverse(o => { if (o.geometry) o.geometry.dispose(); }); } layer.innerHTML = ''; parts = []; };
+      const mk = (c, o) => { o = o || {}; return new T.MeshStandardMaterial({ color: c, metalness: o.m ?? 0.35, roughness: o.r ?? 0.45, emissive: o.e ?? 0x000000, emissiveIntensity: o.ei ?? 0.8, transparent: true }); };
+      const box = (w, h, d, m) => new T.Mesh(new T.BoxGeometry(w, h, d), m);
+      const cyl = (r, h, m) => new T.Mesh(new T.CylinderGeometry(r, r, h, 40), m);
+      const mkLabel = (text, p) => { const d = document.createElement('div'); d.textContent = text; d.style.cssText = "position:absolute;left:0;top:0;transform:translate(-50%,-50%);font:500 11px 'JetBrains Mono',monospace;color:#E5E7EB;background:rgba(11,15,25,.85);border:1px solid rgba(6,182,212,.55);padding:3px 8px;border-radius:6px;white-space:nowrap;opacity:0;transition:opacity .25s;box-shadow:0 0 12px rgba(6,182,212,.25);"; layer.appendChild(d); p.label = d; };
+      const register = (obj, off, label, kind) => {
+        const p = { obj, home: obj.position.clone(), off, kind: kind || 'inner', mats: [], edges: [] };
+        obj.traverse(o => { if (o.isMesh) {
+          if (kind === 'gl') o.material = Array.isArray(o.material) ? o.material.map(m => m.clone()) : o.material.clone();
+          (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.transparent = true; p.mats.push(m); });
+          if (p.kind !== 'inner') { const e = new T.LineSegments(new T.EdgesGeometry(o.geometry, 30), new T.LineBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0 })); o.add(e); p.edges.push(e.material); }
+        } });
+        if (label) mkLabel(label, p);
+        parts.push(p); return p;
+      };
+      const add = (obj, pos, off, label, kind) => { obj.position.set(pos[0], pos[1], pos[2]); group.add(obj); return register(obj, new T.Vector3(off[0], off[1], off[2]), label, kind); };
+      const L = (k, d) => (api.labels && api.labels[k]) || d;
+      const frameCam = (t, c) => { tgtHome = new T.Vector3(...t); camHome = new T.Vector3(...c); api.reset(); };
+      const build = () => {
+        clear(); group = new T.Group(); scene.add(group);
+        if (api.gltf && T.GLTFLoader) {
+          frameCam([0, 0.9, 0], [3.8, 2.8, 6.6]);
+          new T.GLTFLoader().parse(api.gltf.slice(0), '', g => {
+            if (!api.alive) return;
+            const root = g.scene; group.add(root);
+            const b = new T.Box3().setFromObject(root), s = new T.Vector3(); b.getSize(s);
+            root.scale.setScalar(3.2 / Math.max(s.x, s.y, s.z, 0.001));
+            const b2 = new T.Box3().setFromObject(root), c = new T.Vector3(); b2.getCenter(c);
+            root.position.sub(c); root.position.y += 0.9; root.updateMatrixWorld(true);
+            const center = new T.Box3().setFromObject(root).getCenter(new T.Vector3());
+            const meshes = []; root.traverse(o => { if (o.isMesh) meshes.push(o); });
+            meshes.forEach((m, i) => {
+              const wc = new T.Box3().setFromObject(m).getCenter(new T.Vector3());
+              let dir = wc.clone().sub(center); if (dir.length() < 0.01) dir.set(0, 1, 0); dir.normalize().multiplyScalar(1.3);
+              const a = m.parent.worldToLocal(wc.clone()), bb = m.parent.worldToLocal(wc.clone().add(dir));
+              register(m, bb.sub(a), i < 8 && m.name ? m.name : null, 'gl');
+            });
+          }, () => { api.gltf = null; api.dirty = true; });
+          return;
+        }
+        const shell = mk(0x1b2232, { m: 0.75, r: 0.3 }), shell2 = mk(0x283149, { m: 0.7, r: 0.35 });
+        const pcb = mk(0x0d3b2e, { m: 0.2, r: 0.7 }), chip = mk(0x111827, { m: 0.4, r: 0.4, e: 0x6366f1, ei: 0.6 }), chipC = mk(0x0f172a, { m: 0.4, r: 0.4, e: 0x06b6d4, ei: 0.55 });
+        const batt = mk(0x334155, { m: 0.8, r: 0.3, e: 0x10b981, ei: 0.14 }), glass = mk(0x05070d, { m: 0.3, r: 0.06, e: 0x1e1b4b, ei: 0.25 }), led = mk(0x06b6d4, { e: 0x06b6d4, ei: 1.2 });
+        if (api.kind === 'phone') {
+          frameCam([0, 0.9, 0], opts.interactive ? [-4.2, 2.6, -5.4] : [3.6, 2.4, 6.6]);
+          add(box(1.5, 3, 0.05, glass), [0, 0.9, 0.09], [0, 0, 1.5], L('display', 'Display'), 'shell');
+          add(box(1.5, 3, 0.1, shell), [0, 0.9, 0], [0, 0, 0], null, 'shell');
+          add(box(1.5, 3, 0.04, shell2), [0, 0.9, -0.08], [0, 0, -1.5], L('back', 'Back glass'), 'shell');
+          const isl = box(0.62, 0.62, 0.04, shell2); add(isl, [-0.36, 2.0, -0.12], [0, 0, -1.9], null, 'shell');
+          add(box(1.28, 1.15, 0.025, pcb), [0, 1.7, 0.01], [0, 0.15, 0.75], L('board', 'Logic board'));
+          add(box(0.36, 0.36, 0.05, chip), [0, 1.78, 0.04], [0, 0.35, 1.1], L('soc', 'SoC'));
+          add(box(0.3, 0.22, 0.04, chipC), [-0.42, 1.52, 0.04], [-0.6, 0.1, 1.05], L('ram', 'RAM'));
+          add(box(0.3, 0.22, 0.04, chipC), [0.42, 1.52, 0.04], [0.6, 0.1, 1.05], L('storage', 'Storage'));
+          add(box(1.2, 1.45, 0.06, batt), [0, 0.42, 0], [0, -0.35, 0.45], L('battery', 'Battery'));
+          const cam = new T.Group(); [[-0.12, 0.12], [0.12, -0.12], [-0.12, -0.12]].forEach(([x, y]) => { const c = cyl(0.1, 0.07, chip); c.rotation.x = Math.PI / 2; c.position.set(x, y, 0); cam.add(c); });
+          add(cam, [-0.36, 2.0, -0.12], [0, 0.3, -2.4], L('camera', 'Camera module'));
+        } else if (api.kind === 'laptop') {
+          frameCam([0, 0.1, 0], [4.8, 3.6, 6.2]);
+          add(box(3.2, 0.05, 2.1, shell), [0, -0.56, 0], [0, -0.9, 0], L('bottom', 'Bottom case'), 'shell');
+          const lid = new T.Group(); const lm = box(3.2, 2.05, 0.05, shell); lm.position.set(0, 1.02, 0); lid.add(lm); const scr = box(3.0, 1.85, 0.01, glass); scr.position.set(0, 1.02, 0.03); lid.add(scr); lid.rotation.x = -0.22;
+          add(lid, [0, -0.44, -1.05], [0, 0.9, -0.7], L('display', 'Display'), 'shell');
+          add(box(3.2, 0.05, 2.1, shell2), [0, -0.44, 0], [0, 1.25, 0.25], L('deck', 'Keyboard deck'), 'shell');
+          add(box(2.4, 0.02, 0.95, pcb), [0, -0.5, -0.45], [0, 0.35, -0.1], L('board', 'Motherboard'));
+          add(box(0.34, 0.04, 0.34, chip), [-0.4, -0.48, -0.45], [0, 0.85, -0.1], L('cpu', 'CPU'));
+          add(box(0.62, 0.02, 0.17, chipC), [0.45, -0.48, -0.62], [0.45, 0.7, -0.25], L('ram', 'RAM'));
+          add(box(0.62, 0.02, 0.17, chipC), [0.45, -0.48, -0.36], [0.45, 0.62, 0.05], null);
+          add(box(0.5, 0.02, 0.14, chipC), [1.0, -0.48, -0.2], [0.85, 0.55, 0.3], L('ssd', 'NVMe SSD'));
+          add(cyl(0.24, 0.04, shell2), [-1.05, -0.49, -0.55], [-0.55, 0.75, -0.3], L('fan', 'Cooling fan'));
+          add(box(2.3, 0.05, 0.62, batt), [0, -0.5, 0.55], [0, 0.2, 0.75], L('battery', 'Battery'));
+        } else {
+          frameCam([0, -0.1, 0], [3.8, 3.0, 5.2]);
+          add(box(1.9, 0.06, 1.9, shell2), [0, 0.02, 0], [0, 1.6, 0], L('top', 'Top cover'), 'shell');
+          add(box(1.9, 0.5, 1.9, shell), [0, -0.26, 0], [0, 0, 0], null, 'shell');
+          add(box(1.2, 0.02, 0.01, led), [0, -0.2, 0.951], [0, 0, 0], null);
+          add(box(1.6, 0.03, 1.6, pcb), [0, -0.46, 0], [0, 0.55, 0], L('board', 'Mainboard'));
+          add(cyl(0.38, 0.22, chip), [-0.25, -0.32, 0.15], [0, 1.25, 0], L('cpu', 'CPU + cooler'));
+          add(box(0.7, 0.02, 0.24, chipC), [0.42, -0.43, -0.45], [0.35, 0.95, -0.35], L('ram', 'RAM'));
+          add(box(0.7, 0.02, 0.24, chipC), [0.42, -0.43, -0.16], [0.35, 0.88, -0.1], null);
+          add(box(0.55, 0.02, 0.15, chipC), [0.4, -0.43, 0.45], [0.5, 0.8, 0.45], L('ssd', 'NVMe SSD'));
+          add(box(0.2, 0.02, 0.2, chip), [-0.55, -0.43, -0.55], [-0.5, 0.8, -0.5], L('wifi', 'Wi-Fi module'));
+        }
+      };
+      const tgt = { shell: { assembled: 1, exploded: 0.4, xray: 0.07 }, inner: { assembled: 1, exploded: 1, xray: 1 }, gl: { assembled: 1, exploded: 1, xray: 0.28 } };
+      const edgeT = { shell: { assembled: 0, exploded: 0.25, xray: 0.9 }, gl: { assembled: 0, exploded: 0, xray: 0.75 }, inner: {} };
+      const v = new T.Vector3(); let e = 0, last = performance.now(), raf;
+      const frame = now => {
+        if (!api.alive) return;
+        raf = requestAnimationFrame(frame);
+        const dt = Math.min(0.05, (now - last) / 1000); last = now;
+        if (api.dirty) { api.dirty = false; build(); }
+        const mode = api.cycle ? ['assembled', 'exploded', 'xray'][Math.floor(now / 3500) % 3] : api.mode;
+        e += ((mode === 'exploded' ? 1 : 0) - e) * Math.min(1, dt * 4);
+        const ee = e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2;
+        const k = Math.min(1, dt * 6);
+        parts.forEach(p => {
+          p.obj.position.copy(p.home).addScaledVector(p.off, ee);
+          const to = tgt[p.kind][mode]; p.mats.forEach(m => { m.opacity += (to - m.opacity) * k; m.depthWrite = m.opacity > 0.9; });
+          const et = edgeT[p.kind][mode] || 0; p.edges.forEach(m => { m.opacity += (et - m.opacity) * k; });
+          if (p.label) { p.obj.getWorldPosition(v); v.project(camera); const show = mode === 'exploded' && e > 0.6 && v.z < 1; p.label.style.opacity = show ? '1' : '0'; p.label.style.left = ((v.x * 0.5 + 0.5) * W) + 'px'; p.label.style.top = ((-v.y * 0.5 + 0.5) * H) + 'px'; }
+        });
+        ring.material.opacity = 0.35 + 0.2 * Math.sin(now / 700);
+        controls.update(); renderer.render(scene, camera);
+      };
+      raf = requestAnimationFrame(frame);
+      const ro = new ResizeObserver(() => { W = el.clientWidth; H = el.clientHeight; if (!W || !H) return; renderer.setSize(W, H); camera.aspect = W / H; camera.updateProjectionMatrix(); });
+      ro.observe(el);
+      api._cleanup = () => { cancelAnimationFrame(raf); ro.disconnect(); controls.dispose(); clear(); renderer.dispose(); cv.remove(); layer.remove(); };
+    });
+    return api;
+  }
+
+  vidRefCache = {};
+  vidRef(key, url) { this._vidUrls = this._vidUrls || {}; this._vidUrls[key] = url; const f = this.vidRefCache[key] || (this.vidRefCache[key] = el => { if (el) { const u = this._vidUrls[key]; if (u && el.src !== u) el.src = u; } }); return f; }
+  adRef(key) { return this.adRefCache[key] || (this.adRefCache[key] = el => { if (el) { this.adEls.set(key, el); if (this.adStart[key] == null) this.adStart[key] = performance.now() - (Object.keys(this.adStart).length * 730) % 4000; } else this.adEls.delete(key); }); }
+  adFor(key) {
+    if (key === 'studio') { const st = this.state.studio; const p = this.product(st.pid); return { name: st.name, specs: st.specs, price: this.kes(p.price), accent: p.accent, style: st.style, model: p.model }; }
+    const p = this.product(key.split(':')[1]); const o = this.state.adOverrides[p.id] || {};
+    return { name: o.name || p.name, specs: o.specs || p.specs, price: this.kes(p.price), accent: p.accent, style: o.style || this.props.adStyle || 'blueprint', model: p.model };
+  }
+  drawAds(now) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), vh = window.innerHeight;
+    this.adEls.forEach((cv, key) => {
+      if (!cv.isConnected) return;
+      const r = cv.getBoundingClientRect(); if (!r.width || !r.height || r.bottom < 0 || r.top > vh) return;
+      const W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
+      if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+      const t = (((now - (this.adStart[key] || 0)) / 1000) % 4 + 4) % 4;
+      this.drawAd(cv.getContext('2d'), W, H, t, this.adFor(key));
+    });
+  }
+  drawAd(ctx, W, H, t, ad) {
+    const S = Math.min(W, H), cx = W / 2, cy = H / 2, acc = ad.accent || '#6366F1';
+    const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; };
+    const cl = x => Math.max(0, Math.min(1, x)), eo = x => 1 - Math.pow(1 - cl(x), 3);
+    const back = x => { x = cl(x); const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+    const font = (wt, px, mono) => wt + ' ' + Math.round(px) + 'px ' + (mono ? "'JetBrains Mono',monospace" : "'Sora',sans-serif");
+    const fit = (txt, wt, max, min, maxW) => { let px = max; ctx.font = font(wt, px); while (px > min && ctx.measureText(txt).width > maxW) { px *= 0.94; ctx.font = font(wt, px); } return px; };
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.shadowBlur = 0; ctx.setLineDash([]);
+    ctx.fillStyle = '#0B0F19'; ctx.fillRect(0, 0, W, H);
+    const gx = cx + Math.sin(t / 4 * Math.PI * 2) * W * 0.2;
+    const g = ctx.createRadialGradient(gx, cy, 0, gx, cy, S * 0.8); g.addColorStop(0, rgba(acc, 0.34)); g.addColorStop(1, 'rgba(11,15,25,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const name = (ad.name || '').toUpperCase(), specs = (ad.specs || []).filter(Boolean).slice(0, 3), n = Math.max(1, specs.length);
+    const fade = t > 3.82 ? cl((4 - t) / 0.18) : t < 0.12 ? cl(t / 0.12) : 1;
+    ctx.globalAlpha = fade;
+    if (ad.style === 'kinetic') {
+      ctx.lineWidth = Math.max(1, S / 400);
+      const hz = H * 0.7; ctx.strokeStyle = rgba(acc, 0.22); ctx.beginPath();
+      for (let i = -8; i <= 8; i++) { ctx.moveTo(cx, hz); ctx.lineTo(cx + i * W * 0.18, H); }
+      const ph = t % 1; for (let j = 0; j < 6; j++) { const k = (j + ph) / 6; const y = hz + (H - hz) * k * k; ctx.moveTo(0, y); ctx.lineTo(W, y); } ctx.stroke();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (t < 0.75) {
+        const p = eo(t / 0.6);
+        ctx.globalAlpha = p * fade; ctx.fillStyle = acc; ctx.font = font(500, S * 0.04, true); ctx.fillText('NEW · NONIX SHOP', cx, cy - S * 0.15);
+        const px = fit(name, 700, S * 0.14, S * 0.05, W * 0.84); ctx.save(); ctx.translate(cx, cy); const sc = 1.35 - 0.35 * p; ctx.scale(sc, sc); ctx.font = font(700, px); ctx.fillStyle = '#fff'; ctx.shadowColor = acc; ctx.shadowBlur = S * 0.05; ctx.fillText(name, 0, 0); ctx.restore();
+      } else if (t < 3.1) {
+        const seg = 2.35 / n, i = Math.min(n - 1, Math.floor((t - 0.75) / seg)), lt = (t - 0.75) - i * seg;
+        ctx.fillStyle = 'rgba(229,231,235,.75)'; ctx.font = font(600, S * 0.045); ctx.textAlign = 'left'; ctx.fillText(name, S * 0.07, S * 0.09);
+        ctx.textAlign = 'right'; ctx.fillStyle = acc; ctx.font = font(500, S * 0.035, true); ctx.fillText('0' + (i + 1) + ' / 0' + n, W - S * 0.07, S * 0.09); ctx.textAlign = 'center';
+        const en = back(lt / 0.28), out = lt > seg - 0.12 ? cl((seg - lt) / 0.12) : 1, txt = specs[i] || '';
+        const px = fit(txt, 700, S * 0.13, S * 0.05, W * 0.84);
+        ctx.save(); ctx.translate(cx, cy); const sc = 1.9 - 0.9 * en; ctx.scale(sc, sc); ctx.globalAlpha = cl(en) * out * fade; ctx.font = font(700, px); ctx.fillStyle = '#fff'; ctx.shadowColor = acc; ctx.shadowBlur = S * 0.06; ctx.fillText(txt, 0, 0); ctx.restore();
+        ctx.globalAlpha = out * fade; ctx.font = font(700, px); const bw = ctx.measureText(txt).width * eo(lt / 0.5); ctx.fillStyle = acc; ctx.fillRect(cx - bw / 2, cy + px * 0.7, bw, Math.max(2, S * 0.008));
+        if (lt < 0.12) { ctx.globalAlpha = (1 - lt / 0.12) * 0.2; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); }
+      } else {
+        const lt = t - 3.1, p = back(lt / 0.32);
+        ctx.globalAlpha = cl(lt / 0.2) * fade; ctx.fillStyle = 'rgba(229,231,235,.85)'; ctx.font = font(600, S * 0.05); ctx.fillText(name, cx, cy - S * 0.16);
+        ctx.save(); ctx.translate(cx, cy); const sc = 1.5 - 0.5 * p; ctx.scale(sc, sc); ctx.font = font(700, fit(ad.price, 700, S * 0.12, S * 0.05, W * 0.84)); ctx.fillStyle = '#10B981'; ctx.shadowColor = '#10B981'; ctx.shadowBlur = S * 0.05; ctx.fillText(ad.price, 0, 0); ctx.restore();
+        ctx.font = font(500, S * 0.035, true); ctx.fillStyle = '#06B6D4'; ctx.fillText('SHOP ON NONIX', cx, cy + S * 0.16);
+      }
+      ctx.globalAlpha = 1; return;
+    }
+    // Blueprint / X-ray: grid, wireframe build-up, spec callouts, solid reveal
+    const step = S / 14; ctx.lineWidth = Math.max(1, S / 600); ctx.strokeStyle = 'rgba(6,182,212,.10)'; ctx.beginPath();
+    for (let x = (cx % step); x < W; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+    for (let y = (cy % step); y < H; y += step) { ctx.moveTo(0, y); ctx.lineTo(W, y); } ctx.stroke();
+    const land = W >= H * 1.05;
+    let dw, dh, dx, dy;
+    if (ad.model === 'laptop') { dw = land ? W * 0.38 : W * 0.7; dh = dw * 0.62; }
+    else if (ad.model === 'minipc') { dw = land ? Math.min(W * 0.3, H * 0.5) : W * 0.5; dh = dw * 0.8; }
+    else { dh = land ? H * 0.66 : H * 0.4; dw = dh * 0.49; }
+    dx = land ? W * 0.27 - dw / 2 : cx - dw / 2; dy = land ? cy - dh / 2 : H * 0.08 + (H * 0.42 - dh) / 2;
+    if (!land) dy = Math.max(S * 0.1, dy);
+    const shape = () => {
+      ctx.beginPath();
+      if (ad.model === 'laptop') {
+        const lidH = dh * 0.78, inset = dw * 0.06;
+        ctx.roundRect(dx + inset, dy, dw - inset * 2, lidH, S * 0.012);
+        ctx.moveTo(dx + inset, dy + lidH); ctx.lineTo(dx, dy + dh); ctx.lineTo(dx + dw, dy + dh); ctx.lineTo(dx + dw - inset, dy + lidH);
+      } else if (ad.model === 'minipc') {
+        ctx.roundRect(dx, dy, dw, dh, S * 0.03);
+      } else {
+        ctx.roundRect(dx, dy, dw, dh, dw * 0.16);
+      }
+    };
+    const per = 2 * (dw + dh) * 1.15;
+    const build = eo(t / 1.0);
+    ctx.save();
+    ctx.strokeStyle = acc; ctx.lineWidth = Math.max(1.5, S / 260); ctx.shadowColor = acc; ctx.shadowBlur = S * 0.02;
+    ctx.setLineDash([per * build, per]); shape(); ctx.stroke(); ctx.setLineDash([]);
+    ctx.shadowBlur = 0; ctx.lineWidth = Math.max(1, S / 500); ctx.strokeStyle = rgba('#06B6D4', 0.55 * cl((t - 0.4) / 0.4));
+    ctx.beginPath();
+    if (ad.model === 'phone' || !ad.model) {
+      const r = dw * 0.09; [[0.24, 0.1], [0.42, 0.1], [0.24, 0.17]].forEach(([fx, fy]) => { ctx.moveTo(dx + dw * fx + r, dy + dh * fy); ctx.arc(dx + dw * fx, dy + dh * fy, r, 0, Math.PI * 2); });
+      ctx.rect(dx + dw * 0.15, dy + dh * 0.3, dw * 0.7, dh * 0.22); ctx.rect(dx + dw * 0.15, dy + dh * 0.56, dw * 0.7, dh * 0.34);
+    } else if (ad.model === 'laptop') {
+      ctx.rect(dx + dw * 0.12, dy + dh * 0.06, dw * 0.76, dh * 0.64);
+      for (let i = 0; i < 4; i++) { ctx.moveTo(dx + dw * 0.14, dy + dh * (0.83 + i * 0.035)); ctx.lineTo(dx + dw * 0.86, dy + dh * (0.83 + i * 0.035)); }
+    } else {
+      ctx.moveTo(dx + dw * 0.5 + dw * 0.2, dy + dh * 0.45); ctx.arc(dx + dw * 0.5, dy + dh * 0.45, dw * 0.2, 0, Math.PI * 2);
+      ctx.rect(dx + dw * 0.12, dy + dh * 0.12, dw * 0.22, dh * 0.08); ctx.rect(dx + dw * 0.66, dy + dh * 0.12, dw * 0.22, dh * 0.08);
+      ctx.moveTo(dx + dw * 0.3, dy + dh * 0.86); ctx.lineTo(dx + dw * 0.7, dy + dh * 0.86);
+    }
+    ctx.stroke();
+    // dimension lines
+    const da = cl((t - 0.5) / 0.4) * (1 - cl((t - 3.0) / 0.3));
+    if (da > 0) {
+      ctx.globalAlpha = da * fade; ctx.strokeStyle = 'rgba(148,163,184,.6)'; ctx.fillStyle = 'rgba(148,163,184,.85)'; ctx.font = font(500, S * 0.024, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const yy = dy + dh + S * 0.04; ctx.beginPath(); ctx.moveTo(dx, yy); ctx.lineTo(dx + dw, yy); ctx.moveTo(dx, yy - S * 0.01); ctx.lineTo(dx, yy + S * 0.01); ctx.moveTo(dx + dw, yy - S * 0.01); ctx.lineTo(dx + dw, yy + S * 0.01); ctx.stroke();
+      ctx.fillText('FIG. 01', dx + dw / 2, yy + S * 0.03);
+    }
+    ctx.restore();
+    // reveal: solid fill + scan
+    if (t > 3.0) {
+      const rp = eo((t - 3.0) / 0.45);
+      ctx.save(); ctx.globalAlpha = rp * fade; shape(); ctx.clip();
+      const lg = ctx.createLinearGradient(dx, dy, dx + dw, dy + dh); lg.addColorStop(0, rgba(acc, 0.95)); lg.addColorStop(1, 'rgba(6,182,212,.75)'); ctx.fillStyle = lg; ctx.fillRect(dx, dy, dw, dh * rp + 2);
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(dx, dy + dh * rp - S * 0.006, dw, S * 0.006);
+      ctx.restore();
+    }
+    // header
+    ctx.globalAlpha = cl((t - 0.3) / 0.4) * fade; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#06B6D4'; ctx.font = font(500, S * 0.03, true); ctx.textAlign = 'left';
+    ctx.fillText('NONIX // SPEC SHEET', S * 0.06, S * 0.065);
+    // callouts
+    const colX = land ? W * 0.52 : W * 0.1, colW = land ? W * 0.43 : W * 0.8;
+    const topY = land ? cy - (n - 1) * S * 0.12 - S * 0.06 : dy + dh + S * 0.12;
+    const gapY = land ? S * 0.2 : Math.min(S * 0.13, (H * 0.88 - topY) / (n + 1.2));
+    const anchors = [[0.92, 0.18], [0.92, 0.45], [0.92, 0.72]];
+    for (let i = 0; i < n; i++) {
+      const st = 1.0 + i * 0.6, lt = t - st; if (lt < 0) continue;
+      const out = 1 - cl((t - 3.05) / 0.25);
+      const ty = topY + i * gapY;
+      const ax = dx + dw * anchors[i][0], ay = dy + dh * anchors[i][1];
+      ctx.globalAlpha = out * fade;
+      ctx.strokeStyle = rgba(acc, 0.9); ctx.lineWidth = Math.max(1, S / 450);
+      const lp = eo(lt / 0.3);
+      if (land) { const mx = colX - S * 0.04; ctx.beginPath(); ctx.moveTo(ax, ay); const ex = ax + (mx - ax) * lp, ey = ay + (ty - ay) * lp; ctx.lineTo(ex, ey); ctx.stroke(); ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(ax, ay, S * 0.007, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = acc; ctx.font = font(500, S * 0.026, true); ctx.textAlign = 'left';
+      ctx.fillText('0' + (i + 1), colX, ty - S * 0.045);
+      const tp = eo((lt - 0.15) / 0.35), txt = specs[i];
+      const px = fit(txt, 700, S * (land ? 0.075 : 0.085), S * 0.035, colW);
+      ctx.save(); ctx.beginPath(); ctx.rect(colX, ty - px, colW * tp + 2, px * 2); ctx.clip();
+      ctx.fillStyle = '#fff'; ctx.shadowColor = acc; ctx.shadowBlur = S * 0.025; ctx.font = font(700, px); ctx.fillText(txt, colX, ty); ctx.restore();
+      ctx.fillStyle = rgba('#06B6D4', 0.8); ctx.fillRect(colX + colW * tp, ty - px * 0.6, Math.max(2, S * 0.004), px * 1.2 * (tp < 1 ? 1 : 0));
+    }
+    // price + name reveal
+    if (t > 3.1) {
+      const p = back((t - 3.1) / 0.35);
+      ctx.globalAlpha = cl((t - 3.1) / 0.2) * fade; ctx.textAlign = land ? 'left' : 'center';
+      const px0 = land ? colX : cx, py0 = land ? cy : dy + dh + (H - dy - dh) * 0.45;
+      ctx.fillStyle = '#E5E7EB'; ctx.font = font(700, fit(name, 700, S * 0.07, S * 0.035, land ? colW : W * 0.86)); ctx.fillText(name, px0, py0 - S * 0.07);
+      ctx.save(); ctx.translate(px0, py0 + S * 0.03); ctx.scale(p, p); ctx.fillStyle = '#10B981'; ctx.shadowColor = '#10B981'; ctx.shadowBlur = S * 0.04; ctx.font = font(700, fit(ad.price, 700, S * 0.09, S * 0.04, land ? colW : W * 0.86)); ctx.fillText(ad.price, 0, 0); ctx.restore();
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  hasAi() { return !!(window.claude && window.claude.complete); }
+  async ai(prompt) { try { if (window.claude && window.claude.complete) return (await window.claude.complete(prompt)).trim(); } catch (e) {} return ''; }
+  async sendChat(textArg) {
+    const text = (typeof textArg === 'string' ? textArg : this.state.chatInput).trim(); if (!text || this.state.chatBusy) return;
+    const chat = [...this.state.chat, { role: 'user', text }];
+    if (!this.hasAi()) {
+      // No AI on the public site: hand the question to the sales team on WhatsApp (opened inside the click, so it isn't blocked).
+      const sh = this.state.shop;
+      window.open('https://wa.me/' + String(sh.whatsapp).replace(/\D/g, '') + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
+      this.setState({ chat: [...chat, { role: 'ai', text: 'We’ve opened WhatsApp with your question so our sales team can answer you directly. If it didn’t open, call or WhatsApp ' + sh.phone + '.' }], chatInput: '', chatOpen: true });
+      return;
+    }
+    this.setState({ chat, chatInput: '', chatBusy: true, chatOpen: true });
+    const cat = this.P.map(p => `- ${p.name} (${p.type}): ${p.keySpec}, ${this.kes(p.price)}`).join('\n') + '\n' + this.SW.map(s => `- ${s.name} (${s.sector}): ${s.desc} From ${this.kes(s.base)} base + ${this.kes(s.perUser)}/user/year.`).join('\n');
+    const hist = chat.slice(-10).map(m => (m.role === 'user' ? 'Customer: ' : 'Assistant: ') + m.text).join('\n');
+    const reply = await this.ai(`You are the sales assistant for Nonix Shop by NonixTech, an online store in Kenya selling hardware and enterprise software. Prices are in KES; customers pay by M-Pesa. Institutions request quotes through the RFP builder. Be concise (under 120 words), friendly and specific, plain text without markdown. Only recommend items from this catalog:\n${cat}\n\n${hist}\nAssistant:`);
+    this.setState(s => ({ chat: [...s.chat, { role: 'ai', text: reply || 'I can\u2019t reach the assistant right now. Try again in a moment.' }], chatBusy: false }));
+  }
+  async generateAd() {
+    const st = this.state.studio; if (st.busy) return; const p = this.product(st.pid);
+    this.setState(s => ({ studio: { ...s.studio, busy: true } }));
+    const out = await this.ai(`Write copy for a 4-second product spec ad. Product: ${p.name}. Specs: ${p.rows.map(r => r.join(': ')).join('; ')}. Brief: ${st.prompt || 'general launch ad'}.\nReturn ONLY JSON: {"headline":"max 18 chars","specs":["max 20 chars","max 20 chars","max 20 chars"]}. Specs should be punchy spec lines like "8GB RAM | 256GB".`);
+    let j = null; try { j = JSON.parse(out.slice(out.indexOf('{'), out.lastIndexOf('}') + 1)); } catch (e) {}
+    this.adStart.studio = performance.now();
+    this.setState(s => ({ studio: { ...s.studio, busy: false, name: (j && j.headline) || p.name, specs: (j && Array.isArray(j.specs) ? j.specs.slice(0, 3) : p.specs) } }));
+    if (!j) this.flash('Used product specs (AI unavailable)');
+  }
+  exportAd() {
+    const cv = this.adEls.get('studio'); if (!cv || this.state.studio.rec) return;
+    if (!cv.captureStream || !window.MediaRecorder) return this.flash('Video export not supported in this browser');
+    const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+    const rec = new MediaRecorder(cv.captureStream(30), { mimeType: mime, videoBitsPerSecond: 6000000 }); const chunks = [];
+    rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+    rec.onstop = () => { const url = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' })); const a = document.createElement('a'); a.href = url; a.download = this.state.studio.name.replace(/\W+/g, '_').toLowerCase() + '_ad.webm'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000); this.setState(s => ({ studio: { ...s.studio, rec: false } })); this.flash('Ad exported as WebM'); };
+    this.adStart.studio = performance.now(); rec.start(); this.setState(s => ({ studio: { ...s.studio, rec: true } }));
+    setTimeout(() => rec.stop(), 4000);
+  }
+  setAsset(pid, slot, file) {
+    if (!file) return;
+    if (slot === 'model') {
+      if (!/\.glb$/i.test(file.name)) { this.flash('Please upload a .glb file (binary glTF)'); return; }
+      file.arrayBuffer().then(buf => this.setState(s => ({ assets: { ...s.assets, [pid]: { ...(s.assets[pid] || {}), model: { name: file.name, buf } } } })));
+    } else {
+      const url = URL.createObjectURL(file), isVideo = /^video\//.test(file.type);
+      this.setState(s => ({ assets: { ...s.assets, [pid]: { ...(s.assets[pid] || {}), [slot]: { url, name: file.name, isVideo } } } }));
+    }
+    this.flash(file.name + ' uploaded');
+  }
+
+  renderVals() {
+    const s = this.state, P = this.P, layout = this.props.homeLayout ?? 'split';
+    const on = (a, c) => a ? { bg: c || '#6366F1', fg: '#fff' } : { bg: 'transparent', fg: '#94A3B8' };
+    const chip = (a, c) => a ? { bg: 'rgba(99,102,241,.16)', fg: '#fff', border: c || '#6366F1' } : { bg: 'transparent', fg: '#CBD5E1', border: 'rgba(148,163,184,.25)' };
+    const p = this.product(), assets = s.assets[p.id] || {};
+    const photoOrder = [['front', 'FRONT'], ['right', 'RIGHT'], ['back', 'BACK'], ['left', 'LEFT'], ['top', 'TOP'], ['anim', 'ANIMATION']];
+    const photos = photoOrder.filter(([k]) => assets[k]).map(([k, l]) => ({ ...assets[k], label: l }));
+    const ph = photos[Math.min(s.photoIdx, Math.max(0, photos.length - 1))];
+    const cartItems = s.cart.filter(c => P.some(x => x.id === c.id)).map(c => { const q = this.product(c.id); return { ...q, qty: c.qty, line: q.price * c.qty, lineText: this.kes(q.price * c.qty),
+      inc: () => this.setState(st => ({ cart: st.cart.map(x => x.id === c.id ? { ...x, qty: x.qty + 1 } : x) })),
+      dec: () => this.setState(st => ({ cart: st.cart.map(x => x.id === c.id ? { ...x, qty: x.qty - 1 } : x).filter(x => x.qty > 0) })) }; });
+    const sub = cartItems.reduce((a, c) => a + c.line, 0), vat = sub * 0.16 / 1.16, ship = sub > 0 ? (sub >= 50000 ? 0 : 500) : 0;
+    const sw = this.SW.find(x => x.id === s.swId) || this.SW[0];
+    const rfpBtn = id => { const inR = s.rfpSel.includes(id); return { rfpLabel: inR ? 'In RFP ✓' : 'Add to RFP', rfpBg: inR ? 'rgba(16,185,129,.14)' : 'transparent', rfpFg: inR ? '#6EE7B7' : '#CBD5E1', rfpBorder: inR ? 'rgba(16,185,129,.55)' : 'rgba(148,163,184,.28)', toggleRfp: () => this.toggleRfp(id) }; };
+    const fmtK = (v, kind) => typeof v === 'number' ? (kind === 'kes' ? 'KES ' + (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : Math.round(v / 1000) + 'K') : Math.round(v).toLocaleString('en-KE')) : v;
+    const jitter = (i) => 1 + 0.04 * Math.sin(s.live * 1.3 + i * 2.1);
+    const statusColor = { Open: '#6EE7B7', Matched: '#6EE7B7', Marked: '#6EE7B7', Sent: '#6EE7B7', Published: '#6EE7B7', Submitted: '#6EE7B7', OK: '#6EE7B7', On: '#6EE7B7', Healthy: '#6EE7B7', Done: '#6EE7B7', Running: '#A5F3FC', Pending: '#FCD34D', Review: '#FCD34D', Busy: '#FCD34D', Low: '#FCA5A5', Offline: '#FCA5A5' };
+    const r = s.rfp, addonPrice = { 'Training': 60000, 'Data migration': 120000, '24/7 support': 0, 'Custom integrations': 200000 };
+    const deployMul = { Cloud: 1, 'On-premise': 1.25, Hybrid: 1.15 }[r.deploy];
+    const lines = []; let total = 0;
+    s.rfpSel.forEach(id => { const x = this.SW.find(y => y.id === id); if (!x) return; const v = (x.base + x.perUser * r.users + (r.sites - 1) * x.base * 0.1) * deployMul; total += v; lines.push({ k: x.name, v: this.kes(v) }); });
+    r.addons.forEach(a => { const v = a === '24/7 support' ? total * 0.15 : addonPrice[a]; if (s.rfpSel.length) { total += v; lines.push({ k: a, v: this.kes(v) }); } });
+    const fmt = s.studio.format;
+    const units = n => n === 1 ? '' : 's';
+    const sh = s.shop, due = this.kes(sub + ship), payee = sh.mpesaNumber ? (sh.mpesaType === 'paybill' ? 'Paybill ' + sh.mpesaNumber : 'Till ' + sh.mpesaNumber) : '';
+    return {
+      navItems: [['home', 'Hardware'], ['enterprise', 'Enterprise']].map(([v, l]) => { const a = s.view === v || (v === 'home' && s.view === 'product'); return { label: l, bg: a ? 'rgba(99,102,241,.16)' : 'transparent', fg: a ? '#fff' : '#94A3B8', go: () => this.go(v) }; }),
+      goHome: () => this.go('home'), goEnterprise: () => this.go('enterprise'), goRfp: () => this.go('rfp'), goCart: () => this.go('cart'),
+      goRfpLink: e => { e.preventDefault(); this.go('rfp'); }, goCheckout: () => this.go('checkout', { coError: '' }),
+      goStudioAssets: () => this.go('studio', { studioTab: 'assets', assetPid: p.id }),
+      cartCount: s.cart.reduce((a, c) => a + c.qty, 0), rfpCount: s.rfpSel.length,
+      isHome: s.view === 'home', isProduct: s.view === 'product', isEnterprise: s.view === 'enterprise', isCart: s.view === 'cart', isCheckout: s.view === 'checkout', isRfp: s.view === 'rfp', isStudio: s.view === 'studio',
+      layoutSplit: layout === 'split', layoutStage: layout === 'stage', layoutCatalog: layout === 'catalog',
+      heroRef: this.heroRef, heroName: P[0].name.toUpperCase(), heroCta: 'View ' + P[0].name,
+      openHeroProduct: () => this.go('product', { pid: P[0].id, mode: 'assembled', mediaTab: '3d', qty: 1 }),
+      heroModes: [['auto', 'Auto'], ['assembled', 'Assembled'], ['exploded', 'Exploded'], ['xray', 'X-Ray']].map(([v, l]) => ({ label: l, ...on(s.heroMode === v), pick: () => this.setState({ heroMode: v }) })),
+      scrollHardware: () => { const el = this.hardwareRef.current; if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' }); },
+      hardwareRef: this.hardwareRef,
+      featuredAdRef: this.adRef('feat:' + P[0].id),
+      featured: { ...P[0], type: P[0].type.toUpperCase(), priceText: this.kes(P[0].price), open: () => this.go('product', { pid: P[0].id, mode: 'assembled', mediaTab: '3d', qty: 1 }), add: () => this.addToCart(P[0].id, 1) },
+      productCards: P.map(x => ({ ...x, typeUpper: x.type.toUpperCase(), priceText: this.kes(x.price), adRef: this.adRef('card:' + x.id), open: () => this.go('product', { pid: x.id, mode: 'assembled', mediaTab: '3d', qty: 1, photoIdx: 0 }), add: () => this.addToCart(x.id, 1) })),
+      swCards: this.SW.map(x => ({ ...x, sectorUpper: x.sector.toUpperCase(), demo: () => this.go('enterprise', { swId: x.id, demoMod: 0 }), ...rfpBtn(x.id) })),
+      productRef: this.productRef,
+      pd: { ...p, typeUpper: p.type.toUpperCase(), priceText: this.kes(p.price), rows: p.rows.map(([k, v]) => ({ k, v })) },
+      tab3d: s.mediaTab === '3d', tabPhotos: s.mediaTab === 'photos', tabAd: s.mediaTab === 'ad',
+      mediaTabs: [['3d', '3D model'], ['photos', '360° photos'], ['ad', 'Spec ad']].map(([v, l]) => ({ label: l, ...chip(s.mediaTab === v), pick: () => this.setState({ mediaTab: v }) })),
+      viewModes: [['assembled', 'Assembled'], ['exploded', 'Exploded'], ['xray', 'X-Ray']].map(([v, l]) => ({ label: l, ...on(s.mode === v), pick: () => this.setState({ mode: v }) })),
+      modelSource: assets.model ? 'CUSTOM MODEL · ' + assets.model.name.toUpperCase() : 'DRAG · SCROLL TO ZOOM · RIGHT-DRAG TO PAN',
+      resetView: () => this.viewers.product && this.viewers.product.reset(),
+      pdAdRef: this.adRef('pd:' + p.id),
+      hasPhotos: photos.length > 0, noPhotos: photos.length === 0, showThumbs: s.mediaTab === 'photos' && photos.length > 1,
+      photoSrc: ph ? ph.url : '', photoVidRef: this.vidRef('photo:' + p.id + ':' + s.photoIdx + ':' + (ph && ph.isVideo ? ph.url : ''), ph && ph.isVideo ? ph.url : ''), photoBg: ph && !ph.isVideo ? 'url("' + ph.url + '")' : 'none', photoLabel: ph ? ph.label : '', photoIsVideo: !!(ph && ph.isVideo), photoIsImg: !!(ph && !ph.isVideo),
+      photoThumbs: photos.map((x, i) => ({ label: x.label, border: i === s.photoIdx ? '#06B6D4' : 'rgba(148,163,184,.25)', pick: () => this.setState({ photoIdx: i }) })),
+      photoDown: e => { this._drag = e.clientX; }, photoUp: () => { this._drag = null; },
+      photoMove: e => { if (this._drag == null || photos.length < 2) return; const d = e.clientX - this._drag; if (Math.abs(d) > 50) { this._drag = e.clientX; this.setState(st => ({ photoIdx: (st.photoIdx + (d > 0 ? -1 : 1) + photos.length) % photos.length })); } },
+      qty: s.qty, qtyUp: () => this.setState(st => ({ qty: st.qty + 1 })), qtyDown: () => this.setState(st => ({ qty: Math.max(1, st.qty - 1) })),
+      addPd: () => this.addToCart(p.id, s.qty), buyNow: () => { this.addToCart(p.id, s.qty); this.go('checkout', { coError: '' }); },
+      askAboutPd: () => this.sendChat('Tell me about the ' + p.name + '. Who is it best for?'),
+      swList: this.SW.map(x => ({ ...x, fromText: this.kes(x.base), border: x.id === sw.id ? x.color : 'rgba(148,163,184,.14)', bg: x.id === sw.id ? 'rgba(99,102,241,.1)' : 'rgba(15,23,42,.5)', pick: () => this.setState({ swId: x.id, demoMod: 0 }) })),
+      sw: { ...sw, ...rfpBtn(sw.id) },
+      demoModules: sw.modules.map((m, i) => ({ label: m, bg: i === s.demoMod ? 'rgba(99,102,241,.18)' : 'transparent', fg: i === s.demoMod ? '#fff' : '#94A3B8', pick: () => this.setState({ demoMod: i }) })),
+      demoKpis: sw.kpis.map(([l, v, k], i) => ({ label: l, value: fmtK(typeof v === 'number' ? v * jitter(i + s.demoMod) : v, k) })),
+      demoChartTitle: sw.modules[s.demoMod] + ' · ' + sw.chart,
+      demoBars: Array.from({ length: 12 }, (_, i) => { const h = 30 + 55 * Math.abs(Math.sin(i * 0.7 + s.demoMod * 1.7 + s.live * 0.45)) * (0.6 + 0.4 * Math.sin(i * 0.3)); return { h: Math.max(8, Math.min(100, h)) + '%', c: sw.color }; }),
+      demoRows: sw.rows.map((row, i) => { const rr = sw.rows[(i + s.demoMod) % sw.rows.length]; const fg = statusColor[rr[2]] || '#CBD5E1'; return { a: rr[0], b: rr[1], c: rr[2], fg, bg: fg.replace(/^#(..)(..)(..)$/, (m, a, b, c) => `rgba(${parseInt(a, 16)},${parseInt(b, 16)},${parseInt(c, 16)},.12)`) }; }),
+      cartItems, cartEmpty: !cartItems.length, cartHas: cartItems.length > 0,
+      cartSummary: [{ k: 'Subtotal', v: this.kes(sub) }, { k: 'Delivery', v: ship ? this.kes(ship) : 'Free' }, { k: 'Includes VAT (16%)', v: this.kes(vat) }],
+      cartTotalText: this.kes(sub + ship),
+      co: { ...s.co, ...Object.fromEntries(['name', 'phone', 'address', 'code'].map(k => ['on' + k[0].toUpperCase() + k.slice(1), e => { const v = e.target.value; this.setState(st => ({ co: { ...st.co, [k]: v }, coError: '' })); }])) },
+      payLines: !sh.mpesaNumber ? [{ k: 'Pay with', v: 'M-Pesa' }, { k: 'Amount', v: due }]
+        : sh.mpesaType === 'paybill' ? [{ k: 'Lipa na M-Pesa', v: 'Paybill' }, { k: 'Business no.', v: sh.mpesaNumber }, { k: 'Account no.', v: 'Your order number' }, { k: 'Amount', v: due }]
+        : [{ k: 'Lipa na M-Pesa', v: 'Buy Goods' }, { k: 'Till number', v: sh.mpesaNumber }, { k: 'Name', v: sh.mpesaName }, { k: 'Amount', v: due }],
+      payHelp: sh.mpesaNumber ? 'Place your order, then pay to ' + payee + '. We confirm every payment by hand and call you to arrange delivery.' : 'Place your order and we’ll call you with the M-Pesa payment details.',
+      payCta: s.saving ? 'Sending order…' : 'Place order · ' + due,
+      coError: s.coError, stkPending: false, stkMsg: '',
+      orderPlaced: !!s.placed, orderOpen: !s.placed, orderNo: s.placed ? s.placed.no : '',
+      orderMsg: !s.placed ? '' : s.placed.code ? `Thanks! We've got your M-Pesa code ${s.placed.code}. We'll confirm the ${s.placed.total} payment and call ${s.placed.phone} to arrange delivery.`
+        : s.placed.payee ? `Now pay ${s.placed.total} to ${s.placed.payee}${s.placed.paybill ? ' with account ' + s.placed.no : ''}. We'll call ${s.placed.phone} once it's confirmed to arrange delivery.`
+        : `We'll call ${s.placed.phone} shortly with M-Pesa payment details for ${s.placed.total}.`,
+      placeOrder: async () => {
+        if (s.saving) return;
+        const c = s.co; if (!cartItems.length) return this.setState({ coError: 'Your cart is empty.' });
+        if (!c.name.trim() || c.phone.replace(/\D/g, '').length < 9 || !c.address.trim()) return this.setState({ coError: 'Fill in your name, phone and delivery address.' });
+        const code = c.code.trim().toUpperCase();
+        if (code && !/^[A-Z0-9]{10}$/.test(code)) return this.setState({ coError: 'An M-Pesa code is 10 letters and numbers, e.g. SJK4H7X2PQ. Leave it blank if you haven’t paid yet.' });
+        const no = 'NX-' + Math.floor(100000 + Math.random() * 900000);
+        this.setState({ saving: true, coError: '' });
+        try {
+          await this.save('orders', no, { no, status: 'awaiting_payment', customer: { name: c.name.trim(), phone: c.phone.trim(), address: c.address.trim() }, mpesaCode: code,
+            items: cartItems.map(x => ({ id: x.id, name: x.name, price: x.price, qty: x.qty })), subtotal: sub, delivery: ship, total: sub + ship });
+        } catch (e) {
+          console.warn('Order not saved', e);
+          return this.setState({ saving: false, coError: 'We couldn’t send your order. Check your connection and try again, or call ' + sh.phone + '.' });
+        }
+        this.setState({ saving: false, placed: { no, total: due, phone: c.phone.trim(), code, payee, paybill: sh.mpesaType === 'paybill' }, cart: [], co: { ...c, code: '' } });
+      },
+      rfp: { ...r, onOrg: e => { const v = e.target.value; this.setState(st => ({ rfp: { ...st.rfp, org: v }, rfpError: '' })); }, onEmail: e => { const v = e.target.value; this.setState(st => ({ rfp: { ...st.rfp, email: v }, rfpError: '' })); }, onPhone: e => { const v = e.target.value; this.setState(st => ({ rfp: { ...st.rfp, phone: v } })); }, onNotes: e => { const v = e.target.value; this.setState(st => ({ rfp: { ...st.rfp, notes: v } })); }, onUsers: e => { const v = +e.target.value; this.setState(st => ({ rfp: { ...st.rfp, users: v } })); }, onSites: e => { const v = +e.target.value; this.setState(st => ({ rfp: { ...st.rfp, sites: v } })); } },
+      orgTypes: ['School', 'Hospital', 'Retail', 'Farm', 'Government', 'Corporate'].map(v => ({ label: v, ...chip(r.type === v), pick: () => this.setState(st => ({ rfp: { ...st.rfp, type: v } })) })),
+      rfpSystems: this.SW.map(x => { const a = s.rfpSel.includes(x.id); return { name: x.name, sector: x.sector, bg: a ? 'rgba(99,102,241,.14)' : 'rgba(11,15,25,.5)', border: a ? '#6366F1' : 'rgba(148,163,184,.2)', toggle: () => this.toggleRfp(x.id) }; }),
+      deployOpts: ['Cloud', 'On-premise', 'Hybrid'].map(v => ({ label: v, ...on(r.deploy === v), pick: () => this.setState(st => ({ rfp: { ...st.rfp, deploy: v } })) })),
+      addonOpts: Object.keys(addonPrice).map(a => ({ label: a, ...chip(r.addons.includes(a), '#06B6D4'), toggle: () => this.setState(st => ({ rfp: { ...st.rfp, addons: st.rfp.addons.includes(a) ? st.rfp.addons.filter(x => x !== a) : [...st.rfp.addons, a] } })) })),
+      estLines: s.rfpSel.length ? [...lines, { k: r.users + ' user' + units(r.users) + ' · ' + r.sites + ' site' + units(r.sites) + ' · ' + r.deploy, v: '' }] : [],
+      estEmpty: !s.rfpSel.length, estRange: s.rfpSel.length ? this.kes(total * 0.9) + ' – ' + this.kes(total * 1.15) : '—',
+      rfpError: s.rfpError, rfpDone: !!s.rfpRef, rfpOpen: !s.rfpRef, rfpRef: s.rfpRef ? s.rfpRef.ref : '',
+      rfpDoneMsg: s.rfpRef ? `${s.rfpRef.org}: ${s.rfpRef.systems}. We'll email a formal proposal to ${s.rfpRef.email} and book a scoping call.` : '',
+      newRfp: () => this.setState({ rfpRef: null }),
+      submitRfp: async () => {
+        if (s.saving) return;
+        if (!s.rfpSel.length) return this.setState({ rfpError: 'Select at least one system.' });
+        if (!r.org.trim()) return this.setState({ rfpError: 'Enter your organisation name.' });
+        if (!/^\S+@\S+\.\S+$/.test(r.email)) return this.setState({ rfpError: 'Enter a valid work email.' });
+        const ref = 'RFP-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000), systems = s.rfpSel.map(id => this.SW.find(x => x.id === id).name);
+        this.setState({ saving: true, rfpError: '' });
+        try {
+          await this.save('quotes', ref, { ref, status: 'new', org: r.org.trim(), orgType: r.type, email: r.email.trim(), phone: r.phone.trim(), notes: r.notes.trim(),
+            users: r.users, sites: r.sites, deploy: r.deploy, addons: r.addons, systems, estimateLow: Math.round(total * 0.9), estimateHigh: Math.round(total * 1.15) });
+        } catch (e) {
+          console.warn('Quote not saved', e);
+          return this.setState({ saving: false, rfpError: 'We couldn’t send your request. Check your connection and try again, or call ' + sh.phone + '.' });
+        }
+        this.setState({ saving: false, rfpRef: { ref, org: r.org, email: r.email, systems: systems.join(', ') }, rfpSel: [] });
+      },
+      studioTabs: [['assets', 'Asset manager'], ['video', 'AI video ads']].map(([v, l]) => ({ label: l, ...on(s.studioTab === v), pick: () => this.setState({ studioTab: v }) })),
+      stAssets: s.studioTab === 'assets', stVideo: s.studioTab === 'video',
+      productOpts: P.map(x => ({ id: x.id, name: x.name })),
+      assetPid: s.assetPid, onAssetPid: e => this.setState({ assetPid: e.target.value }),
+      assetStatus: (() => { const a = s.assets[s.assetPid] || {}; const n = Object.keys(a).length; return n + ' of 7 uploaded'; })(),
+      previewListing: () => this.go('product', { pid: s.assetPid, mediaTab: (s.assets[s.assetPid] || {}).model ? '3d' : 'photos', photoIdx: 0, mode: 'assembled' }),
+      assetSlots: [['front', 'Front', 'image/*', 'PNG or JPG'], ['back', 'Back', 'image/*', 'PNG or JPG'], ['left', 'Left side', 'image/*', 'PNG or JPG'], ['right', 'Right side', 'image/*', 'PNG or JPG'], ['top', 'Top', 'image/*', 'PNG or JPG'], ['model', '3D model', '.glb', '.glb (binary glTF)'], ['anim', 'Animation', 'image/gif,video/webm,video/mp4', 'GIF, WebM or MP4']].map(([k, l, acc, hint]) => {
+        const a = (s.assets[s.assetPid] || {})[k]; const pid = s.assetPid;
+        return { label: l, accept: acc, hint, url: a && a.url, vidRef: this.vidRef('slot:' + pid + ':' + k + ':' + (a && a.isVideo ? a.url : ''), a && a.isVideo ? a.url : ''), bgUrl: a && a.url && !a.isVideo ? 'url("' + a.url + '")' : 'none', fileName: a ? a.name : '', isImg: !!(a && a.url && !a.isVideo), isVideo: !!(a && a.isVideo), isModel: k === 'model' && !!a, empty: !a,
+          status: a ? 'UPLOADED' : 'EMPTY', statusColor: a ? '#6EE7B7' : '#64748B', border: a ? 'rgba(16,185,129,.5)' : 'rgba(148,163,184,.28)',
+          onFile: e => { this.setAsset(pid, k, e.target.files && e.target.files[0]); e.target.value = ''; },
+          onOver: e => e.preventDefault(), onDrop: e => { e.preventDefault(); this.setAsset(pid, k, e.dataTransfer.files && e.dataTransfer.files[0]); } };
+      }),
+      studio: s.studio,
+      onStudioPid: e => { const q = this.product(e.target.value); this.adStart.studio = performance.now(); this.setState(st => ({ studio: { ...st.studio, pid: q.id, name: q.name, specs: [...q.specs] } })); },
+      onStudioPrompt: e => { const v = e.target.value; this.setState(st => ({ studio: { ...st.studio, prompt: v } })); },
+      onStudioName: e => { const v = e.target.value; this.setState(st => ({ studio: { ...st.studio, name: v } })); },
+      studioSpecs: [0, 1, 2].map(i => ({ v: s.studio.specs[i] || '', ph: 'Spec line ' + (i + 1), on: e => { const v = e.target.value; this.setState(st => { const sp = [...st.studio.specs]; sp[i] = v; return { studio: { ...st.studio, specs: sp } }; }); } })),
+      generateAd: () => this.generateAd(), generateLabel: s.studio.busy ? 'Generating…' : 'Generate with AI',
+      formatOpts: [['1:1', '1:1'], ['9:16', '9:16'], ['16:9', '16:9']].map(([v, l]) => ({ label: l, ...on(fmt === v), pick: () => { this.adStart.studio = performance.now(); this.setState(st => ({ studio: { ...st.studio, format: v } })); } })),
+      styleOpts: [['blueprint', 'Blueprint'], ['kinetic', 'Kinetic']].map(([v, l]) => ({ label: l, ...on(s.studio.style === v), pick: () => { this.adStart.studio = performance.now(); this.setState(st => ({ studio: { ...st.studio, style: v } })); } })),
+      previewW: fmt === '9:16' ? 'min(100%, 300px)' : fmt === '16:9' ? '100%' : 'min(100%, 460px)', previewAR: fmt.replace(':', ' / '),
+      studioAdRef: this.adRef('studio'),
+      exportAd: () => this.exportAd(), exportLabel: s.studio.rec ? 'Recording 4 s…' : 'Export WebM',
+      attachAd: () => { const st = s.studio; this.setState(x => ({ adOverrides: { ...x.adOverrides, [st.pid]: { name: st.name, specs: st.specs.filter(Boolean), style: st.style } } })); this.flash('Ad now plays on the ' + this.product(st.pid).name + ' card'); },
+      chatOpen: s.chatOpen, chatClosed: !s.chatOpen, chatBusy: s.chatBusy, chatScrollRef: this.chatScrollRef,
+      openChat: () => this.setState({ chatOpen: true }), closeChat: () => this.setState({ chatOpen: false }),
+      chatMsgs: s.chat.map(m => m.role === 'user' ? { text: m.text, justify: 'flex-end', bg: '#6366F1', fg: '#fff', border: '#6366F1' } : { text: m.text, justify: 'flex-start', bg: 'rgba(30,41,59,.7)', fg: '#E5E7EB', border: 'rgba(148,163,184,.15)' }),
+      showChatSuggest: s.chat.length < 2 && !s.chatBusy,
+      chatSuggest: [P.length > 1 ? 'Compare ' + P[0].name + ' and ' + P[Math.min(2, P.length - 1)].name : 'Tell me about the ' + P[0].name, 'What does a hospital system cost for 80 staff?', 'Best laptop for a school computer lab?'].map(t => ({ text: t, use: () => this.sendChat(t) })),
+      chatStatus: this.hasAi() ? 'Online' : 'Replies on WhatsApp',
+      photoEmptyTitle: 'No 360° photos yet', photoEmptyText: 'Photos for this product are coming soon. Use the 3D model to inspect it, or ask sales for pictures.',
+      chatInput: s.chatInput, onChatInput: e => this.setState({ chatInput: e.target.value }),
+      onChatKey: e => { if (e.key === 'Enter') { e.preventDefault(); this.sendChat(); } }, sendChat: () => this.sendChat(),
+      toast: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>
