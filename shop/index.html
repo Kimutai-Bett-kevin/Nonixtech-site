@@ -748,7 +748,7 @@ class Component extends DCLogic {
       kpis: [['Runs today', 3902], ['Success rate', '99.1%'], ['Docs processed', 18440], ['Avg latency', '1.8 s']],
       rows: [['Invoice extractor', '1,204 docs', 'Healthy'], ['Sales report agent', 'Daily 07:00', 'Done'], ['ERP sync · Sage', 'Every 15 min', 'Healthy'], ['Support triage bot', '86 chats', 'Running']] }
   ];
-  viewers = {}; adEls = new Map(); adStart = {}; adRefCache = {}; photoReq = {};
+  viewers = {}; adEls = new Map(); adStart = {}; adRefCache = {}; photoReq = {}; modelReq = {};
   chatScrollRef = React.createRef(); hardwareRef = React.createRef();
   state = {
     view: 'home', pid: 'ip16pro', mode: 'assembled', mediaTab: '3d', qty: 1, photoIdx: 0,
@@ -794,7 +794,7 @@ class Component extends DCLogic {
   }
   fromDoc(id, d) {
     return { id, name: d.name || 'Untitled', type: d.type || 'Product', model: d.model || 'phone', price: Number(d.price) || 0, accent: d.accent || '#6366F1',
-      specs: (d.specs || []).filter(Boolean), keySpec: d.keySpec || '', blurb: d.blurb || '', rows: (d.rows || []).map(r => [r.k, r.v]), labels: d.labels || {}, sort: Number(d.sort) || 0 };
+      specs: (d.specs || []).filter(Boolean), keySpec: d.keySpec || '', blurb: d.blurb || '', rows: (d.rows || []).map(r => [r.k, r.v]), labels: d.labels || {}, sort: Number(d.sort) || 0, model3d: d.model3d || null };
   }
   async loadShop() {
     const db = await this.db(); if (!db) return;
@@ -808,7 +808,26 @@ class Component extends DCLogic {
       if (this.state.view === 'product') this.loadPhotos(this.state.pid);
     } catch (e) { console.warn('Could not load products', e); }
   }
+  // A product's chosen AI 3D model is stored in Firestore as binary chunks (see admin3d.js); cache it in the browser per version.
+  async loadModel3d(pid) {
+    const p = this.P.find(x => x.id === pid), m = p && p.model3d;
+    if (!m || !m.ver || !m.chunks || this.modelReq[pid] === m.ver) return; this.modelReq[pid] = m.ver;
+    const key = '/__nxmodel/' + pid + '/' + m.ver; let buf = null, cache = null;
+    try { cache = await caches.open('nonix-models'); const hit = await cache.match(key); if (hit) buf = await hit.arrayBuffer(); } catch (e) {}
+    try {
+      if (!buf) {
+        const db = await this.db(); if (!db) { this.modelReq[pid] = null; return; }
+        const docs = await Promise.all(Array.from({ length: m.chunks }, (_, i) => db.doc('productModels/' + pid + '/chunks/' + m.ver + '_' + String(i).padStart(3, '0')).get()));
+        if (docs.some(d => !d.exists)) throw new Error('model incomplete');
+        const parts = docs.map(d => d.data().data.toUint8Array()), out = new Uint8Array(parts.reduce((a, x) => a + x.length, 0));
+        let o = 0; parts.forEach(x => { out.set(x, o); o += x.length; }); buf = out.buffer;
+        if (cache) { (await cache.keys()).forEach(r => { const u = new URL(r.url).pathname; if (u.startsWith('/__nxmodel/' + pid + '/') && u !== key) cache.delete(r); }); await cache.put(key, new Response(buf.slice(0))).catch(() => {}); }
+      }
+      this.setState(s => ({ assets: { ...s.assets, [pid]: { ...(s.assets[pid] || {}), model: { name: 'db:' + m.ver, label: 'AI 3D MODEL · DRAG · SCROLL TO ZOOM', buf } } } }));
+    } catch (e) { console.warn('Could not load 3D model', e); this.modelReq[pid] = null; }
+  }
   async loadPhotos(pid) {
+    this.loadModel3d(pid);
     if (!pid || this.photoReq[pid]) return; this.photoReq[pid] = true;
     const db = await this.db(); if (!db) return;
     try {
@@ -830,6 +849,7 @@ class Component extends DCLogic {
       if (!window.THREE) await this.loadScript(b + 'build/three.min.js');
       if (!window.THREE.OrbitControls) await this.loadScript(b + 'examples/js/controls/OrbitControls.js');
       if (!window.THREE.GLTFLoader) await this.loadScript(b + 'examples/js/loaders/GLTFLoader.js').catch(() => {});
+      if (!window.THREE.RoomEnvironment) await this.loadScript(b + 'examples/js/environments/RoomEnvironment.js').catch(() => {});
     })().catch(e => { console.warn('three.js failed to load', e); window.__nxThree = null; });
     return window.__nxThree;
   }
@@ -921,12 +941,20 @@ class Component extends DCLogic {
       const L = (k, d) => (api.labels && api.labels[k]) || d;
       const frameCam = (t, c) => { tgtHome = new T.Vector3(...t); camHome = new T.Vector3(...c); api.reset(); };
       const build = () => {
-        clear(); group = new T.Group(); scene.add(group);
+        clear(); group = new T.Group(); scene.add(group); scene.environment = null;
         if (api.gltf && T.GLTFLoader) {
           frameCam([0, 0.9, 0], [3.8, 2.8, 6.6]);
           new T.GLTFLoader().parse(api.gltf.slice(0), '', g => {
             if (!api.alive) return;
             const root = g.scene; group.add(root);
+            // Environment lighting for textured (PBR) models; untextured shapes get a solid accent-tinted material.
+            let textured = false;
+            root.traverse(o => { if (!o.isMesh) return; const hasC = !!o.geometry.getAttribute('color'), m0 = Array.isArray(o.material) ? o.material[0] : o.material;
+              if (hasC) { textured = true; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.vertexColors = true; m.needsUpdate = true; }); }
+              else if (m0 && m0.map) textured = true;
+              else o.material = mk(0x5b6578, { m: 0.55, r: 0.38 });
+              if (!o.geometry.getAttribute('normal')) o.geometry.computeVertexNormals(); });
+            if (textured && T.RoomEnvironment) { const pm = new T.PMREMGenerator(renderer); scene.environment = pm.fromScene(new T.RoomEnvironment(), 0.04).texture; }
             const b = new T.Box3().setFromObject(root), s = new T.Vector3(); b.getSize(s);
             root.scale.setScalar(3.2 / Math.max(s.x, s.y, s.z, 0.001));
             const b2 = new T.Box3().setFromObject(root), c = new T.Vector3(); b2.getCenter(c);
@@ -1403,7 +1431,7 @@ ${systems}`;
       tab3d: s.mediaTab === '3d', tabPhotos: s.mediaTab === 'photos', tabAd: s.mediaTab === 'ad',
       mediaTabs: [['3d', '3D model'], ['photos', '360° photos'], ['ad', 'Spec ad']].map(([v, l]) => ({ label: l, ...chip(s.mediaTab === v), pick: () => this.setState({ mediaTab: v }) })),
       viewModes: [['assembled', 'Assembled'], ['exploded', 'Exploded'], ['xray', 'X-Ray']].map(([v, l]) => ({ label: l, ...on(s.mode === v), pick: () => this.setState({ mode: v }) })),
-      modelSource: assets.model ? 'CUSTOM MODEL · ' + assets.model.name.toUpperCase() : 'DRAG · SCROLL TO ZOOM · RIGHT-DRAG TO PAN',
+      modelSource: assets.model ? (assets.model.label || 'CUSTOM MODEL · ' + assets.model.name.toUpperCase()) : 'DRAG · SCROLL TO ZOOM · RIGHT-DRAG TO PAN',
       resetView: () => this.viewers.product && this.viewers.product.reset(),
       pdAdRef: this.adRef('pd:' + p.id),
       hasPhotos: photos.length > 0, noPhotos: photos.length === 0, showThumbs: s.mediaTab === 'photos' && photos.length > 1,

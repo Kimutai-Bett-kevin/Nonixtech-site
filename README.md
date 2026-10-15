@@ -32,6 +32,18 @@ X-ray view with a spec highlighted, compare 2-3 products, open an enterprise
 demo module, add to cart, open a page, or pre-fill a quote. It cannot place
 orders; the customer still submits checkout.
 
+3D models (`shop/g3d.js`, `shop/admin3d.js`, admin tab "3D models"): upload a
+product photo and generate `.glb` models with three free Hugging Face Spaces in
+parallel, straight from the browser (no backend): Stable Fast 3D (successor of
+TripoSR, whose Space is broken), InstantMesh and Hunyuan3D-2 (falls back to an
+untextured shape when its texture step fails). Each Space removes the
+background itself. "Use This Model" stores the chosen `.glb` in Firestore as
+~900 KB chunks (`productModels/{pid}/chunks`, max 15 MB; the free plan has no
+file storage) and sets `products/{pid}.model3d`; the shop loads it into the
+product viewer and caches it in the browser. Free GPU time is limited per
+person per day; an optional Hugging Face token (saved only in the admin's
+browser) gives more.
+
 Payments are manual: customers see the till/paybill number from
 `settings/shop` and the admin marks orders paid after checking M-Pesa.
 

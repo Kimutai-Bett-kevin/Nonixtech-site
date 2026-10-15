@@ -10,6 +10,11 @@ service cloud.firestore {
     match /products/{id} { allow read: if true; allow write: if isAdmin(); }
     match /productPhotos/{id} { allow read: if true; allow write: if isAdmin(); }
     match /settings/{id} { allow read: if true; allow write: if isAdmin(); }
+    // Chosen 3D model per product, stored as ~900 KB binary chunks (no file storage on the free plan).
+    match /productModels/{pid} {
+      allow read: if true; allow write: if isAdmin();
+      match /chunks/{n} { allow read: if true; allow write: if isAdmin(); }
+    }
 
     // Customers can place an order but never read or change one; only the admin can.
     match /orders/{id} {

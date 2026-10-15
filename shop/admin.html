@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Nonix Shop Admin</title>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -54,7 +55,7 @@
   <div class="bar">
     <span class="brand">NONIX<span> SHOP</span> · admin</span>
     <nav id="tabs" class="hidden">
-      <button data-tab="orders">Orders</button><button data-tab="quotes">Quotes</button><button data-tab="products">Products</button><button data-tab="settings">Settings</button>
+      <button data-tab="orders">Orders</button><button data-tab="quotes">Quotes</button><button data-tab="products">Products</button><button data-tab="models">3D models</button><button data-tab="settings">Settings</button>
     </nav>
     <span class="grow"></span>
     <a href="/shop/" target="_blank" class="muted">Open shop ↗</a>
@@ -118,7 +119,7 @@ tabsEl.onclick = e => { const t = e.target.dataset.tab; if (t) show(t); };
 function show(t) {
   tab = t; if (unsub) { unsub(); unsub = null; }
   [...tabsEl.children].forEach(b => b.classList.toggle('on', b.dataset.tab === t));
-  ({ orders: showOrders, quotes: showQuotes, products: showProducts, settings: showSettings })[t]();
+  ({ orders: showOrders, quotes: showQuotes, products: showProducts, models: showModels, settings: showSettings })[t]();
 }
 
 // ---------- Orders ----------
@@ -220,7 +221,7 @@ async function editProduct(p) {
   slots.onclick = e => { const k = e.target.dataset.clear; if (k) { e.preventDefault(); delete pending[k]; drawSlots(); } };
   if (!isNew) document.getElementById('pdel').onclick = async () => {
     if (!confirm('Delete ' + p.name + '? This cannot be undone.')) return;
-    await db.doc('products/' + p.id).delete(); await db.doc('productPhotos/' + p.id).delete(); toast('Deleted'); show('products');
+    await (await import('/shop/admin3d.js')).deleteModel(db, p.id); await db.doc('products/' + p.id).delete(); await db.doc('productPhotos/' + p.id).delete(); toast('Deleted'); show('products');
   };
   document.getElementById('pf').onsubmit = async e => {
     e.preventDefault(); const f = e.target, btn = document.getElementById('psave');
@@ -254,6 +255,13 @@ function shrink(file) {
     };
     img.onerror = rej; img.src = url;
   });
+}
+
+// ---------- 3D models (photo -> .glb with three AI engines; see admin3d.js) ----------
+async function showModels() {
+  app.innerHTML = '<h1>3D models</h1><p class="muted">Loading…</p>';
+  try { await (await import('/shop/admin3d.js')).show3d(app, { db, toast, esc }); }
+  catch (e) { app.innerHTML = '<h1>3D models</h1><p class="err">Could not load the 3D tools: ' + esc(e.message) + '</p>'; }
 }
 
 // ---------- Settings ----------
