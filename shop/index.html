@@ -823,7 +823,7 @@ class Component extends DCLogic {
         let o = 0; parts.forEach(x => { out.set(x, o); o += x.length; }); buf = out.buffer;
         if (cache) { (await cache.keys()).forEach(r => { const u = new URL(r.url).pathname; if (u.startsWith('/__nxmodel/' + pid + '/') && u !== key) cache.delete(r); }); await cache.put(key, new Response(buf.slice(0))).catch(() => {}); }
       }
-      this.setState(s => ({ assets: { ...s.assets, [pid]: { ...(s.assets[pid] || {}), model: { name: 'db:' + m.ver, label: 'AI 3D MODEL · DRAG · SCROLL TO ZOOM', buf } } } }));
+      this.setState(s => ({ assets: { ...s.assets, [pid]: { ...(s.assets[pid] || {}), model: { name: 'db:' + m.ver, label: 'AI 3D MODEL · DRAG · SCROLL TO ZOOM', buf, yaw: m.yaw ?? (m.engine === 'sf3d' ? Math.PI : 0) } } } }));
     } catch (e) { console.warn('Could not load 3D model', e); this.modelReq[pid] = null; }
   }
   async loadPhotos(pid) {
@@ -881,7 +881,7 @@ class Component extends DCLogic {
       pv.mode = this.state.mode;
       const p = this.product(); const a = (this.state.assets[p.id] || {}).model;
       const key = p.id + (a ? ':' + a.name : '');
-      if (pv.key !== key) { pv.key = key; pv.kind = p.model; pv.labels = p.labels; pv.gltf = a ? a.buf : null; pv.dirty = true; }
+      if (pv.key !== key) { pv.key = key; pv.kind = p.model; pv.labels = p.labels; pv.gltf = a ? a.buf : null; pv.yaw = a ? a.yaw || 0 : 0; pv.dirty = true; }
     }
   }
   heroRef = el => {
@@ -946,7 +946,7 @@ class Component extends DCLogic {
           frameCam([0, 0.9, 0], [3.8, 2.8, 6.6]);
           new T.GLTFLoader().parse(api.gltf.slice(0), '', g => {
             if (!api.alive) return;
-            const root = g.scene; group.add(root);
+            const root = g.scene; root.rotation.y = api.yaw || 0; group.add(root); // turn so the photographed side faces the camera
             // Environment lighting for textured (PBR) models; untextured shapes get a solid accent-tinted material.
             let textured = false;
             root.traverse(o => { if (!o.isMesh) return; const hasC = !!o.geometry.getAttribute('color'), m0 = Array.isArray(o.material) ? o.material[0] : o.material;

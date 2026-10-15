@@ -11,7 +11,7 @@ const mb = n => (n / 1048576).toFixed(1) + ' MB';
 const pad = i => String(i).padStart(3, '0');
 
 // ---------- Viewer: orbit (rotate / zoom / pan), environment lighting, auto-framing ----------
-export function viewer(el, buf) {
+export function viewer(el, buf, yaw = 0) {
   const W = () => el.clientWidth || 300, H = () => el.clientHeight || 300;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); renderer.setSize(W(), H());
@@ -24,7 +24,7 @@ export function viewer(el, buf) {
   const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.autoRotate = true; controls.autoRotateSpeed = 1.2;
   renderer.domElement.addEventListener('pointerdown', () => { controls.autoRotate = false; }, { once: true });
   new GLTFLoader().parse(buf.slice(0), '', g => {
-    const root = g.scene; fixMaterials(root); scene.add(root);
+    const root = g.scene; fixMaterials(root); root.rotation.y = yaw; scene.add(root);
     const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
     root.position.sub(c); const r = Math.max(size.x, size.y, size.z) || 1;
     camera.position.set(r * 1.1, r * 0.6, r * 1.6); camera.near = r / 100; camera.far = r * 50; camera.updateProjectionMatrix();
@@ -62,7 +62,7 @@ export async function saveModel(db, pid, engine, blob) {
   const ver = Date.now().toString(36), n = Math.ceil(u8.length / CHUNK), B = firebase.firestore.Blob;
   for (let i = 0; i < n; i++)
     await db.doc(`productModels/${pid}/chunks/${ver}_${pad(i)}`).set({ ver, i, data: B.fromUint8Array(u8.subarray(i * CHUNK, (i + 1) * CHUNK)) });
-  const meta = { ver, chunks: n, bytes: u8.length, engine, engineName: (engines[engine] || {}).name || engine };
+  const meta = { ver, chunks: n, bytes: u8.length, engine, engineName: (engines[engine] || {}).name || engine, yaw: (engines[engine] || {}).yaw || 0 };
   await db.doc('productModels/' + pid).set({ ...meta, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
   await db.doc('products/' + pid).set({ model3d: meta }, { merge: true }); // the shop reads this to know which chunks to load
   if (prev && prev.ver && prev.ver !== ver) await deleteChunks(db, pid, prev.ver, prev.chunks);
@@ -119,7 +119,7 @@ export async function show3d(app, { db, toast, esc }) {
     el.innerHTML = `<div class="row">Current 3D model: <b>${esc(m.engineName || m.engine)}</b> · ${mb(m.bytes)} <button class="btn" id="m-cur-view" type="button">Preview</button> <button class="btn danger" id="m-cur-del" type="button">Remove (use built-in shape)</button></div><div id="m-cur-box"></div>`;
     $('m-cur-view').onclick = async () => {
       const box = $('m-cur-box'); box.innerHTML = '<div style="height:320px;max-width:520px;margin-top:10px;border:1px solid var(--line);border-radius:12px;position:relative"><p class="muted" style="padding:12px">Loading…</p></div>';
-      try { viewer(box.firstChild, await loadModel(db, m, p.id)); } catch (e) { box.innerHTML = '<p class="err">' + esc(e.message) + '</p>'; }
+      try { viewer(box.firstChild, await loadModel(db, m, p.id), m.yaw ?? (engines[m.engine] || {}).yaw ?? 0); } catch (e) { box.innerHTML = '<p class="err">' + esc(e.message) + '</p>'; }
     };
     $('m-cur-del').onclick = async () => {
       if (!confirm('Remove the 3D model from ' + p.name + '? The shop will show the built-in shape.')) return;
@@ -149,7 +149,7 @@ export async function show3d(app, { db, toast, esc }) {
           ${r.blob ? `<a class="btn" style="display:inline-grid;place-items:center;text-decoration:none" download="${esc(pidSel.value + '-' + k)}.glb" href="${r.href}">Download .glb</a><button class="btn primary" data-use="${k}">Use This Model</button>` : ''}</div>
       </div>`;
     }).join('');
-    Object.entries(results).forEach(([k, r]) => { if (r.buf) viewer(document.querySelector(`[data-engine="${k}"] .m-view`), r.buf); });
+    Object.entries(results).forEach(([k, r]) => { if (r.buf) viewer(document.querySelector(`[data-engine="${k}"] .m-view`), r.buf, engines[k].yaw); });
   }
   renderCards();
 

@@ -5,6 +5,7 @@
 const ENGINES = {
   sf3d: {
     name: 'Stable Fast 3D', note: 'Fast, textured (successor to TripoSR)',
+    yaw: Math.PI, // its model faces away from the photo's camera; turn it round so the photographed side is in front
     base: 'https://stabilityai-stable-fast-3d.hf.space', prefix: '',
     async run(c, img, onStatus) {
       // The Space's main button runs twice: "Remove Background" (fills its session state), then "Run".
@@ -15,7 +16,7 @@ const ENGINES = {
     }
   },
   instantmesh: {
-    name: 'InstantMesh', note: 'Multi-view reconstruction (Tencent ARC)',
+    name: 'InstantMesh', note: 'Multi-view reconstruction (Tencent ARC)', yaw: 0,
     base: 'https://tencentarc-instantmesh.hf.space', prefix: '/gradio_api',
     async run(c, img) {
       const [clean] = await c.call(2, [img, true], null);
@@ -25,7 +26,7 @@ const ENGINES = {
     }
   },
   hunyuan: {
-    name: 'Hunyuan3D-2', note: 'High detail, PBR texture (slowest)',
+    name: 'Hunyuan3D-2', note: 'High detail, PBR texture (slowest)', yaw: 0,
     base: 'https://tencent-hunyuan3d-2.hf.space', prefix: '',
     async run(c, img, onStatus) {
       const args = ['', img, null, null, null, null, 30, 5, 1234, 256, true, 8000, false];
@@ -110,4 +111,4 @@ export async function generate(engine, imageBlob, opts = {}) {
   return { engine, name: e.name, blob: new Blob([buf], { type: 'model/gltf-binary' }), bytes: buf.byteLength };
 }
 
-export const engines = Object.fromEntries(Object.entries(ENGINES).map(([k, v]) => [k, { name: v.name, note: v.note }]));
+export const engines = Object.fromEntries(Object.entries(ENGINES).map(([k, v]) => [k, { name: v.name, note: v.note, yaw: v.yaw }]));
