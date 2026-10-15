@@ -25,8 +25,12 @@ https://nonixtech.web.app (project `nonixtech`); it is not the live domain.
 Sales chat: **Noni Sales AI** runs on Gemini through Firebase AI Logic
 (Gemini Developer API, free tier, `gemini-flash-lite-latest` with
 `gemini-flash-latest` as fallback). No Gemini key is in this repo; Firebase
-holds it. Its name, rules and catalogue are set in `sendChat` in
-`shop/index.html`.
+holds it. Its name, rules and catalogue are set in `noniSystem` in
+`shop/index.html`. Noni can also change the screen through Gemini function
+calling (`noniTools` / `runNoniTool`): open a product in assembled, exploded or
+X-ray view with a spec highlighted, compare 2-3 products, open an enterprise
+demo module, add to cart, open a page, or pre-fill a quote. It cannot place
+orders; the customer still submits checkout.
 
 Payments are manual: customers see the till/paybill number from
 `settings/shop` and the admin marks orders paid after checking M-Pesa.
