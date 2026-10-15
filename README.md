@@ -22,6 +22,12 @@ https://nonixtech.web.app (project `nonixtech`); it is not the live domain.
 - `firestore.rules`: anyone can read products and place orders or quote
   requests; only admins can read orders/quotes or change the catalogue.
 
+Sales chat: **Noni Sales AI** runs on Gemini through Firebase AI Logic
+(Gemini Developer API, free tier, `gemini-flash-lite-latest` with
+`gemini-flash-latest` as fallback). No Gemini key is in this repo; Firebase
+holds it. Its name, rules and catalogue are set in `sendChat` in
+`shop/index.html`.
+
 Payments are manual: customers see the till/paybill number from
 `settings/shop` and the admin marks orders paid after checking M-Pesa.
 
