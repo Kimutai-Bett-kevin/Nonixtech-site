@@ -1,11 +1,12 @@
-// Admin "3D models" tab: turn a product photo into .glb models with three AI engines, compare them
-// side by side, and save the chosen one to Firestore (in ~900 KB binary chunks, since the free plan has no file storage).
+// Admin "3D models" tab. Phones: put the phone's real photos on the shop's built-in 3D phone (photo3d.js).
+// Other shapes: turn a product photo into .glb models with three AI engines, compare them side by side, and save
+// the chosen one to Firestore (in ~900 KB binary chunks, since the free plan has no file storage).
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generate, engines } from './g3d.js';
-import { buildPhotoModel } from './photo3d.js';
+import { makeSkin } from './photo3d.js';
 
 const CHUNK = 900 * 1024, MAX_BYTES = 15 * 1024 * 1024, TOKEN_KEY = 'nonixHfToken';
 const mb = n => (n / 1048576).toFixed(1) + ' MB';
@@ -84,6 +85,19 @@ export async function deleteModel(db, pid) {
   await db.doc('products/' + pid).update({ model3d: firebase.firestore.FieldValue.delete() }).catch(() => {});
 }
 
+// Phone photos: the trimmed screen and back photos (JPEG data URLs, well under Firestore's 1 MB per document)
+// go in productSkins/{pid}; products/{pid}.skin tells the shop they exist and which version to load.
+export async function saveSkin(db, pid, skin) {
+  const meta = { ver: Date.now().toString(36), aspect: skin.aspect, colour: skin.colour };
+  await db.doc('productSkins/' + pid).set({ ...meta, front: skin.front, back: skin.back, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+  await db.doc('products/' + pid).set({ skin: meta }, { merge: true });
+  return meta;
+}
+export async function deleteSkin(db, pid) {
+  await db.doc('productSkins/' + pid).delete().catch(() => {});
+  await db.doc('products/' + pid).update({ skin: firebase.firestore.FieldValue.delete() }).catch(() => {});
+}
+
 // ---------- Tab ----------
 export async function show3d(app, { db, toast, esc }) {
   const products = (await db.collection('products').get()).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.sort || 0) - (b.sort || 0));
@@ -98,16 +112,10 @@ export async function show3d(app, { db, toast, esc }) {
       <div id="m-current" class="muted"></div>
     </div>
     <div class="card list">
-      <b>Photo model: phones, tablets, TVs</b>
-      <span class="muted">Built from real photos of each side, so it looks exactly like the product. Ready in seconds, no GPU limits. It starts with this product's 360° photos; click a box to use a different photo. Front and back are needed; side photos are optional. Photos work best on a plain background, with the product filling the frame.</span>
-      <div class="photos" id="pm-slots"></div>
-      <div class="grid">
-        <label>Width (mm)<input id="pm-w" type="number" min="20" max="2000" step="0.1" value="75"></label>
-        <label>Thickness (mm, blank = from side photo)<input id="pm-t" type="number" min="1" max="300" step="0.1"></label>
-        <label>Corner radius (mm)<input id="pm-r" type="number" min="0" max="300" step="0.5" value="8"></label>
-        <label>Side colour<span class="row"><input id="pm-c" type="color" value="#5b6578" style="height:42px;padding:4px;max-width:70px"><label class="muted" style="flex-direction:row;align-items:center;gap:6px"><input id="pm-auto" type="checkbox" checked style="width:auto"> From photos</label></span></label>
-      </div>
-      <div class="row"><button class="btn primary" id="pm-go" type="button">Build Photo Model</button><span class="muted" id="pm-note"></span></div>
+      <b>Phone photos (recommended for phones)</b>
+      <span class="muted">Puts this phone's real photos on the shop's built-in 3D phone: the front photo becomes the screen and the back photo the back cover. It always looks like a phone, and Exploded and X-Ray still show the battery, board, chips and camera with your spec labels. It starts with this product's 360° photos; click a box to use a different photo. Use photos of the whole phone, straight on, on a plain background.</span>
+      <div class="photos" id="pm-slots" style="max-width:300px"></div>
+      <div class="row"><button class="btn primary" id="pm-go" type="button">Prepare Photos</button><span class="muted" id="pm-note"></span></div>
       <div id="pm-out"></div>
     </div>
     <div class="card list">
@@ -129,6 +137,14 @@ export async function show3d(app, { db, toast, esc }) {
 
   async function showCurrent() {
     const p = products.find(x => x.id === pidSel.value), m = p && p.model3d, el = $('m-current');
+    if (!m && p && p.skin) {
+      el.innerHTML = `<div class="row">Current 3D model: <b>built-in phone with this phone's photos</b> <a class="btn" style="display:inline-grid;place-items:center;text-decoration:none" href="/shop/?product=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Open in shop ↗</a> <button class="btn danger" id="m-skin-del" type="button">Remove photos</button></div>`;
+      $('m-skin-del').onclick = async () => {
+        if (!confirm('Remove the photos from the 3D phone for ' + p.name + '? The shop will show the plain built-in phone.')) return;
+        await deleteSkin(db, p.id); delete p.skin; toast('Photos removed from the 3D phone'); showCurrent();
+      };
+      return;
+    }
     if (!m) { el.innerHTML = 'Current 3D model: <b>none</b>, the shop shows the built-in ' + esc(p ? p.model || 'phone' : '') + ' shape.'; return; }
     el.innerHTML = `<div class="row">Current 3D model: <b>${esc(m.engineName || m.engine)}</b> · ${mb(m.bytes)} <button class="btn" id="m-cur-view" type="button">Preview</button> <button class="btn danger" id="m-cur-del" type="button">Remove (use built-in shape)</button></div><div id="m-cur-box"></div>`;
     $('m-cur-view').onclick = async () => {
@@ -140,16 +156,16 @@ export async function show3d(app, { db, toast, esc }) {
       await deleteModel(db, p.id); delete p.model3d; toast('3D model removed'); showCurrent();
     };
   }
-  // ---------- Photo model ----------
-  const PM_SLOTS = [['front', 'Front *'], ['back', 'Back *'], ['left', 'Left side'], ['right', 'Right side']];
-  let pmPhotos = {}, pmResult = null;
+  // ---------- Phone photos (skin for the built-in phone) ----------
+  const PM_SLOTS = [['front', 'Front'], ['back', 'Back']];
+  let pmPhotos = {};
   const drawPmSlots = () => {
     $('pm-slots').innerHTML = PM_SLOTS.map(([k, l]) => `<label class="slot"><input type="file" accept="image/*" data-pm="${k}" hidden>
       <div class="img" style="${pmPhotos[k] ? `background-image:url('${esc(pmPhotos[k])}')` : ''}">${pmPhotos[k] ? '' : '+'}</div>
       <div class="lbl"><span>${l}</span>${pmPhotos[k] ? `<button type="button" data-pm-clear="${k}">Remove</button>` : ''}</div></label>`).join('');
   };
   async function loadPmPhotos() {
-    pmResult = null; $('pm-out').innerHTML = ''; $('pm-note').textContent = '';
+    $('pm-out').innerHTML = ''; $('pm-note').textContent = '';
     const ph = await db.doc('productPhotos/' + pidSel.value).get().then(d => d.exists ? d.data() : {}).catch(() => ({}));
     pmPhotos = {}; PM_SLOTS.forEach(([k]) => { if (typeof ph[k] === 'string') pmPhotos[k] = ph[k]; });
     drawPmSlots();
@@ -160,24 +176,25 @@ export async function show3d(app, { db, toast, esc }) {
     pmPhotos[k] = URL.createObjectURL(f); drawPmSlots();
   };
   $('pm-slots').onclick = e => { const k = e.target.dataset.pmClear; if (k) { e.preventDefault(); delete pmPhotos[k]; drawPmSlots(); } };
-  $('pm-c').oninput = () => { $('pm-auto').checked = false; };
   $('pm-go').onclick = async () => {
-    const btn = $('pm-go'), note = $('pm-note'); btn.disabled = true; note.textContent = 'Building…';
+    const p = products.find(x => x.id === pidSel.value), btn = $('pm-go'), note = $('pm-note');
+    if (p.model && p.model !== 'phone') { $('pm-out').innerHTML = `<p class="err">${esc(p.name)}'s 3D model shape is not "Phone". Change it under Products first.</p>`; return; }
+    btn.disabled = true; note.textContent = 'Preparing…';
     try {
-      const r = await buildPhotoModel(pmPhotos, { widthMm: $('pm-w').value, thicknessMm: $('pm-t').value, radiusMm: $('pm-r').value, colour: $('pm-auto').checked ? '' : $('pm-c').value });
-      $('pm-c').value = r.colour;
-      pmResult = { ...r, buf: await r.blob.arrayBuffer(), href: URL.createObjectURL(r.blob) };
+      const skin = await makeSkin(pmPhotos);
       note.textContent = '';
-      $('pm-out').innerHTML = `<div style="height:320px;max-width:520px;border:1px solid var(--line);border-radius:12px;position:relative;overflow:hidden"></div>
-        <div class="row" style="margin-top:8px"><span class="muted grow">${mb(r.bytes)} · ${r.sizeMm.join(' × ')} mm</span>
-        <a class="btn" style="display:inline-grid;place-items:center;text-decoration:none" download="${esc(pidSel.value)}-photo.glb" href="${pmResult.href}">Download .glb</a>
-        <button class="btn primary" id="pm-use" type="button">Use This Model</button></div>`;
-      viewer($('pm-out').firstElementChild, pmResult.buf);
+      $('pm-out').innerHTML = `<span class="muted">Check the phone is cut out cleanly, with no background or shadow left around it:</span>
+        <div class="row" style="align-items:flex-end;margin:8px 0"><figure style="margin:0"><img src="${skin.front}" style="height:220px;border-radius:10px;border:1px solid var(--line)"><figcaption class="muted">Screen</figcaption></figure>
+        <figure style="margin:0"><img src="${skin.back}" style="height:220px;border-radius:10px;border:1px solid var(--line)"><figcaption class="muted">Back cover</figcaption></figure>
+        <span class="muted">Frame colour <span style="display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:middle;background:${skin.colour}"></span> ${skin.colour}</span></div>
+        <div class="row"><button class="btn primary" id="pm-use" type="button">Use on ${esc(p.name)}</button><span class="muted">Replaces any AI model on this product.</span></div>`;
       $('pm-use').onclick = async () => {
-        const p = products.find(x => x.id === pidSel.value), b = $('pm-use'); b.disabled = true; b.textContent = 'Saving…';
-        try { p.model3d = await saveModel(db, p.id, 'photo', pmResult.blob); toast('Photo model saved for ' + p.name); showCurrent(); }
-        catch (err) { toast('Could not save: ' + err.message); }
-        b.disabled = false; b.textContent = 'Use This Model';
+        const b = $('pm-use'); b.disabled = true; b.textContent = 'Saving…';
+        try {
+          p.skin = await saveSkin(db, p.id, skin);
+          if (p.model3d) { await deleteModel(db, p.id); delete p.model3d; }
+          toast('Photos saved on the 3D phone for ' + p.name); showCurrent(); $('pm-out').innerHTML = '';
+        } catch (err) { toast('Could not save: ' + err.message); b.disabled = false; b.textContent = 'Use on ' + p.name; }
       };
     } catch (err) { note.textContent = ''; $('pm-out').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
     btn.disabled = false;

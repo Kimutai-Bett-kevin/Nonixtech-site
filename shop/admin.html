@@ -221,7 +221,7 @@ async function editProduct(p) {
   slots.onclick = e => { const k = e.target.dataset.clear; if (k) { e.preventDefault(); delete pending[k]; drawSlots(); } };
   if (!isNew) document.getElementById('pdel').onclick = async () => {
     if (!confirm('Delete ' + p.name + '? This cannot be undone.')) return;
-    await (await import('/shop/admin3d.js')).deleteModel(db, p.id); await db.doc('products/' + p.id).delete(); await db.doc('productPhotos/' + p.id).delete(); toast('Deleted'); show('products');
+    const a3 = await import('/shop/admin3d.js'); await a3.deleteModel(db, p.id); await a3.deleteSkin(db, p.id); await db.doc('products/' + p.id).delete(); await db.doc('productPhotos/' + p.id).delete(); toast('Deleted'); show('products');
   };
   document.getElementById('pf').onsubmit = async e => {
     e.preventDefault(); const f = e.target, btn = document.getElementById('psave');

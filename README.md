@@ -44,14 +44,17 @@ product viewer and caches it in the browser. Free GPU time is limited per
 person per day; an optional Hugging Face token (saved only in the admin's
 browser) gives more.
 
-Photo models (`shop/photo3d.js`, admin tab "3D models", first card): for flat
-products (phones, tablets, TVs) the admin builds the model from real photos
-instead of AI. It starts with the product's 360° photos (front and back
-needed, sides optional), trims the background, and lays each photo on a
-rounded slab sized from the width you enter (thickness from a side photo).
-The photos are unlit so their colours match the product. Built in the
-browser in seconds, about 100–150 KB, no GPU limits; saved like the AI
-models (`engine: 'photo'`).
+Phone photos (`shop/photo3d.js`, admin tab "3D models", first card): the
+recommended way to show a phone. The admin picks a front and a back photo
+(the product's 360° photos by default); the background is trimmed (only
+background connected to the photo's edges, so white parts of the phone stay)
+and the two JPEGs are saved in `productSkins/{pid}`, with `products/{pid}.skin`
+pointing at them. The shop puts them on its built-in phone: rounded body,
+front photo as the screen, back photo as the back cover, proportions from the
+photos, frame in the phone's edge colour. Exploded and X-Ray still show the
+board, chips, battery and camera with the spec labels. Saving photos removes
+any AI model from the product (an AI model would be shown instead).
+`/shop/?product=<id>` opens a product directly.
 
 Payments are manual: customers see the till/paybill number from
 `settings/shop` and the admin marks orders paid after checking M-Pesa.

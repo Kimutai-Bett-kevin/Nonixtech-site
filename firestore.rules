@@ -9,6 +9,8 @@ service cloud.firestore {
     // Shop catalogue and settings: public to read, admin to change.
     match /products/{id} { allow read: if true; allow write: if isAdmin(); }
     match /productPhotos/{id} { allow read: if true; allow write: if isAdmin(); }
+    // Trimmed screen and back photos laid on the shop's built-in 3D phone.
+    match /productSkins/{id} { allow read: if true; allow write: if isAdmin(); }
     match /settings/{id} { allow read: if true; allow write: if isAdmin(); }
     // Chosen 3D model per product, stored as ~900 KB binary chunks (no file storage on the free plan).
     match /productModels/{pid} {

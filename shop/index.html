@@ -748,7 +748,7 @@ class Component extends DCLogic {
       kpis: [['Runs today', 3902], ['Success rate', '99.1%'], ['Docs processed', 18440], ['Avg latency', '1.8 s']],
       rows: [['Invoice extractor', '1,204 docs', 'Healthy'], ['Sales report agent', 'Daily 07:00', 'Done'], ['ERP sync · Sage', 'Every 15 min', 'Healthy'], ['Support triage bot', '86 chats', 'Running']] }
   ];
-  viewers = {}; adEls = new Map(); adStart = {}; adRefCache = {}; photoReq = {}; modelReq = {};
+  viewers = {}; adEls = new Map(); adStart = {}; adRefCache = {}; photoReq = {}; modelReq = {}; skinReq = {};
   chatScrollRef = React.createRef(); hardwareRef = React.createRef();
   state = {
     view: 'home', pid: 'ip16pro', mode: 'assembled', mediaTab: '3d', qty: 1, photoIdx: 0,
@@ -794,7 +794,7 @@ class Component extends DCLogic {
   }
   fromDoc(id, d) {
     return { id, name: d.name || 'Untitled', type: d.type || 'Product', model: d.model || 'phone', price: Number(d.price) || 0, accent: d.accent || '#6366F1',
-      specs: (d.specs || []).filter(Boolean), keySpec: d.keySpec || '', blurb: d.blurb || '', rows: (d.rows || []).map(r => [r.k, r.v]), labels: d.labels || {}, sort: Number(d.sort) || 0, model3d: d.model3d || null };
+      specs: (d.specs || []).filter(Boolean), keySpec: d.keySpec || '', blurb: d.blurb || '', rows: (d.rows || []).map(r => [r.k, r.v]), labels: d.labels || {}, sort: Number(d.sort) || 0, model3d: d.model3d || null, skin: d.skin || null };
   }
   async loadShop() {
     const db = await this.db(); if (!db) return;
@@ -805,6 +805,8 @@ class Component extends DCLogic {
       const hv = this.viewers.hero; if (hv) { hv.kind = this.P[0].model; hv.labels = this.P[0].labels; hv.dirty = true; }
       this.setState(s => ({ catalogV: s.catalogV + 1, shop: st.exists ? { ...s.shop, ...st.data() } : s.shop,
         cart: s.cart.filter(c => this.P.some(p => p.id === c.id)), pid: this.P.some(p => p.id === s.pid) ? s.pid : this.P[0].id }));
+      const want = new URLSearchParams(location.search).get('product');
+      if (want && !this.deepLinked && this.P.some(p => p.id === want)) { this.deepLinked = true; this.go('product', { pid: want, mode: 'assembled', mediaTab: '3d', qty: 1 }); }
       if (this.state.view === 'product') this.loadPhotos(this.state.pid);
     } catch (e) { console.warn('Could not load products', e); }
   }
@@ -826,8 +828,19 @@ class Component extends DCLogic {
       this.setState(s => ({ assets: { ...s.assets, [pid]: { ...(s.assets[pid] || {}), model: { name: 'db:' + m.ver, label: 'AI 3D MODEL · DRAG · SCROLL TO ZOOM', buf, yaw: m.yaw ?? (m.engine === 'sf3d' ? Math.PI : 0) } } } }));
     } catch (e) { console.warn('Could not load 3D model', e); this.modelReq[pid] = null; }
   }
+  // Phone photos for the built-in 3D phone (screen + back cover), saved from the admin's 3D models tab.
+  async loadSkin(pid) {
+    const p = this.P.find(x => x.id === pid), m = p && p.skin;
+    if (!m || !m.ver || this.skinReq[pid] === m.ver) return; this.skinReq[pid] = m.ver;
+    try {
+      const db = await this.db(); if (!db) { this.skinReq[pid] = null; return; }
+      const d = await db.doc('productSkins/' + pid).get(); if (!d.exists) return;
+      const k = d.data();
+      this.setState(s => ({ assets: { ...s.assets, [pid]: { ...(s.assets[pid] || {}), skin: { ver: k.ver, front: k.front, back: k.back, colour: k.colour, aspect: k.aspect } } } }));
+    } catch (e) { console.warn('Could not load phone photos', e); this.skinReq[pid] = null; }
+  }
   async loadPhotos(pid) {
-    this.loadModel3d(pid);
+    this.loadModel3d(pid); this.loadSkin(pid);
     if (!pid || this.photoReq[pid]) return; this.photoReq[pid] = true;
     const db = await this.db(); if (!db) return;
     try {
@@ -879,9 +892,9 @@ class Component extends DCLogic {
     const pv = this.viewers.product;
     if (pv) {
       pv.mode = this.state.mode;
-      const p = this.product(); const a = (this.state.assets[p.id] || {}).model;
-      const key = p.id + (a ? ':' + a.name : '');
-      if (pv.key !== key) { pv.key = key; pv.kind = p.model; pv.labels = p.labels; pv.gltf = a ? a.buf : null; pv.yaw = a ? a.yaw || 0 : 0; pv.dirty = true; }
+      const p = this.product(), as = this.state.assets[p.id] || {}, a = as.model, sk = as.skin;
+      const key = p.id + (a ? ':' + a.name : '') + (sk ? ':skin' + sk.ver : '');
+      if (pv.key !== key) { pv.key = key; pv.kind = p.model; pv.labels = p.labels; pv.gltf = a ? a.buf : null; pv.yaw = a ? a.yaw || 0 : 0; pv.skin = sk || null; pv.dirty = true; }
     }
   }
   heroRef = el => {
@@ -894,7 +907,7 @@ class Component extends DCLogic {
   };
 
   makeViewer(el, opts) {
-    const api = { mode: 'assembled', kind: 'phone', labels: {}, gltf: null, dirty: false, cycle: false, alive: true, reset: () => {}, dispose() { api.alive = false; if (api._cleanup) api._cleanup(); } };
+    const api = { mode: 'assembled', kind: 'phone', labels: {}, gltf: null, skin: null, dirty: false, cycle: false, alive: true, reset: () => {}, dispose() { api.alive = false; if (api._cleanup) api._cleanup(); } };
     this.loadThree().then(() => {
       if (!api.alive) return;
       const T = window.THREE; if (!T || !T.OrbitControls) return;
@@ -974,7 +987,36 @@ class Component extends DCLogic {
         const shell = mk(0x1b2232, { m: 0.75, r: 0.3 }), shell2 = mk(0x283149, { m: 0.7, r: 0.35 });
         const pcb = mk(0x0d3b2e, { m: 0.2, r: 0.7 }), chip = mk(0x111827, { m: 0.4, r: 0.4, e: 0x6366f1, ei: 0.6 }), chipC = mk(0x0f172a, { m: 0.4, r: 0.4, e: 0x06b6d4, ei: 0.55 });
         const batt = mk(0x334155, { m: 0.8, r: 0.3, e: 0x10b981, ei: 0.14 }), glass = mk(0x05070d, { m: 0.3, r: 0.06, e: 0x1e1b4b, ei: 0.25 }), led = mk(0x06b6d4, { e: 0x06b6d4, ei: 1.2 });
-        if (api.kind === 'phone') {
+        if (api.kind === 'phone' && api.skin) {
+          // The phone's own photos on a rounded body: front photo = screen, back photo = back cover.
+          // Width follows the photos' proportions (height stays 3, so the inner parts still fit).
+          const sk = api.skin, pw = Math.min(1.75, Math.max(1.35, 3 / (sk.aspect || 2))), r = pw * 0.14;
+          const outline = new T.Shape(), x0 = -pw / 2, y0 = -1.5;
+          outline.moveTo(x0 + r, y0); outline.lineTo(x0 + pw - r, y0); outline.quadraticCurveTo(x0 + pw, y0, x0 + pw, y0 + r);
+          outline.lineTo(x0 + pw, y0 + 3 - r); outline.quadraticCurveTo(x0 + pw, y0 + 3, x0 + pw - r, y0 + 3);
+          outline.lineTo(x0 + r, y0 + 3); outline.quadraticCurveTo(x0, y0 + 3, x0, y0 + 3 - r);
+          outline.lineTo(x0, y0 + r); outline.quadraticCurveTo(x0, y0, x0 + r, y0);
+          const slab = (depth, mats) => { const g = new T.ExtrudeGeometry(outline, { depth, bevelEnabled: false, curveSegments: 10 }); g.translate(0, 0, -depth / 2); return new T.Mesh(g, mats); };
+          // Extrude caps get UVs = (x, y); map them onto the photo. The back is seen from behind, so it's mirrored.
+          const photo = (url, mirror) => {
+            const t = new T.TextureLoader().load(url); if (T.sRGBEncoding) t.encoding = T.sRGBEncoding;
+            t.repeat.set((mirror ? -1 : 1) / pw, 1 / 3); t.offset.set(0.5, 0.5);
+            return new T.MeshBasicMaterial({ map: t, transparent: true }); // unlit: the photo already has its lighting
+          };
+          const frame = mk(new T.Color(sk.colour || '#5b6578').getHex(), { m: 0.6, r: 0.35 });
+          frameCam([0, 0.9, 0], opts.interactive ? [-4.2, 2.6, -5.4] : [3.6, 2.4, 6.6]);
+          add(slab(0.05, [photo(sk.front, false), frame]), [0, 0.9, 0.09], [0, 0, 1.5], L('display', 'Display'), 'shell');
+          add(slab(0.1, frame), [0, 0.9, 0], [0, 0, 0], null, 'shell');
+          add(slab(0.04, [photo(sk.back, true), frame]), [0, 0.9, -0.08], [0, 0, -1.5], L('back', 'Back cover'), 'shell');
+          add(box(1.28, 1.15, 0.025, pcb), [0, 1.7, 0.01], [0, 0.15, 0.75], L('board', 'Logic board'));
+          add(box(0.36, 0.36, 0.05, chip), [0, 1.78, 0.04], [0, 0.35, 1.1], L('soc', 'SoC'));
+          add(box(0.3, 0.22, 0.04, chipC), [-0.42, 1.52, 0.04], [-0.6, 0.1, 1.05], L('ram', 'RAM'));
+          add(box(0.3, 0.22, 0.04, chipC), [0.42, 1.52, 0.04], [0.6, 0.1, 1.05], L('storage', 'Storage'));
+          add(box(1.2, 1.45, 0.06, batt), [0, 0.42, 0], [0, -0.35, 0.45], L('battery', 'Battery'));
+          // Camera module sits inside the body (the back photo shows the real cameras); it comes out when exploded.
+          const cam = new T.Group(); [[-0.12, 0.12], [0.12, -0.12], [-0.12, -0.12]].forEach(([x, y]) => { const c = cyl(0.1, 0.07, chip); c.rotation.x = Math.PI / 2; c.position.set(x, y, 0); cam.add(c); });
+          add(cam, [0.36, 2.0, -0.02], [-1.5, 0.55, -0.3], L('camera', 'Camera module'));
+        } else if (api.kind === 'phone') {
           frameCam([0, 0.9, 0], opts.interactive ? [-4.2, 2.6, -5.4] : [3.6, 2.4, 6.6]);
           add(box(1.5, 3, 0.05, glass), [0, 0.9, 0.09], [0, 0, 1.5], L('display', 'Display'), 'shell');
           add(box(1.5, 3, 0.1, shell), [0, 0.9, 0], [0, 0, 0], null, 'shell');
