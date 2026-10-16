@@ -85,7 +85,15 @@ parts backwards and shows the built-in board, chips, battery and camera
 inside with the spec labels; X-Ray makes the shell see-through. The empty
 360° photo boxes (`productPhotos`) are filled with the found front, back and
 side photos and with renders of the model from each side; photos already
-there are kept.
+there are kept. Laptops and other devices are turned to face front (Gemini
+picks the front from four sides); in the shop the screen lid lifts back, the
+deck or top cover lifts up and the bottom drops, with the built-in parts
+inside.
+
+Exploded view, tap a part (or its label): a card shows what the part does
+and the matching spec row, and the part moves out on its own, larger, with a
+glowing outline, turning, while the rest fades. Tap ✕, empty space or
+another view to put it back.
 
 Payments are manual: customers see the till/paybill number from
 `settings/shop` and the admin marks orders paid after checking M-Pesa.

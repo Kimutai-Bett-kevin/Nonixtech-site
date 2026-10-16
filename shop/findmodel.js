@@ -112,14 +112,29 @@ async function standUp(root, onStatus) {
   root.updateMatrixWorld(true);
 }
 
+// Laptops and other devices: Gemini looks at four sides and says which is the front, which is turned to face +z.
+async function faceFront(root, kind, name, onStatus) {
+  const shots = snapper(root), dirs = [[0, 0.25, 1], [1, 0.25, 0], [0, 0.25, -1], [-1, 0.25, 0]], pics = dirs.map(d => shots.shot(d, 'image/jpeg')); shots.dispose();
+  onStatus && onStatus('AI is checking which side is the front…');
+  const what = kind === 'laptop' ? 'a laptop. Its front is the side you sit at: the keyboard faces you and the screen\'s display is visible (not the back of the lid)'
+    : '"' + name + '". Its front is the side with the main buttons, display, logo or front ports, the side that faces the user';
+  try {
+    const o = await askJson([{ text: 'Images A, B, C and D show the same 3D model from four sides. It is ' + what + '. Which image shows the front? Reply with only JSON: {"front": "A", "B", "C" or "D"}' },
+      ...pics.map((u, i) => [{ text: 'Image ' + 'ABCD'[i] }, { inlineData: { mimeType: 'image/jpeg', data: u.split(',')[1] } }]).flat()], onStatus);
+    const turn = { A: 0, B: -Math.PI / 2, C: Math.PI, D: Math.PI / 2 }[o && o.front];
+    if (turn) root.rotateY(turn);
+  } catch (e) { console.warn('Could not check the front', e); }
+  root.updateMatrixWorld(true);
+}
+
 /**
  * Downloaded .glb -> ready for the shop: phones stood upright facing front, textures at most 1024 px, and pictures of
  * it from five sides. Returns { blob (.glb), shots: { front, right, back, left, top } (WebP data URLs) }.
  */
-export async function prepareModel(buf, { phone, onStatus } = {}) {
+export async function prepareModel(buf, { phone, kind, name, onStatus } = {}) {
   onStatus && onStatus('Preparing the 3D model…');
   const scene = await parse(buf), root = new THREE.Group(); root.add(scene); root.updateMatrixWorld(true);
-  if (phone) await standUp(root, onStatus);
+  if (phone) await standUp(root, onStatus); else await faceFront(root, kind, name || 'this product', onStatus);
   const shots = snapper(root), pics = {};
   [['front', [0, 0, 1]], ['right', [1, 0, 0]], ['back', [0, 0, -1]], ['left', [-1, 0, 0]], ['top', [0.0001, 1, 0.35]]].forEach(([k, d]) => { pics[k] = shots.shot(d); });
   shots.dispose();

@@ -145,7 +145,7 @@ export async function show3d(app, { db, toast, esc }) {
     </div>
     <div class="card list" id="pf">
       <b>Find the 3D model and photos online</b>
-      <span class="muted">One click does it all. It looks for a real 3D model of this product on Sketchfab and for its photos on Google Images, and the AI picks the right ones. The best 3D model is downloaded and saved (Exploded and X-Ray work on it, with the battery, board and chips inside phones), and the empty 360° photo boxes are filled with the photos and with pictures of the model from each side. No 3D model found? Phones get their photos on the built-in 3D phone; other shapes go to the AI engines. Click another model or photo afterwards to use it instead.</span>
+      <span class="muted">One click does it all. It looks for a real 3D model of this product on Sketchfab and for its photos on Google Images, and the AI picks the right ones. The best 3D model is downloaded and saved (Exploded and X-Ray work on it, with the board, chips and battery shown inside phones, laptops and mini PCs; tap a part for its details), and the empty 360° photo boxes are filled with the photos and with pictures of the model from each side. No 3D model found? Phones get their photos on the built-in 3D phone; other shapes go to the AI engines. Click another model or photo afterwards to use it instead.</span>
       <div class="row"><input id="pf-q" placeholder="Product name, e.g. itel S25 Ultra" style="max-width:360px"><button class="btn primary" id="pf-go" type="button">Find &amp; Build 3D</button><span class="muted" id="pf-status"></span></div>
       <details><summary class="muted" style="cursor:pointer">Sketchfab API token (needed once, for real 3D models)</summary>
         <div class="row" style="margin-top:8px"><input id="sf-key" type="password" autocomplete="off" placeholder="Sketchfab API token" value="${esc(sfToken)}" style="max-width:360px">
@@ -306,7 +306,7 @@ export async function show3d(app, { db, toast, esc }) {
     $('pf-out').querySelectorAll('[data-pf^="model:"]').forEach(el => { el.style.outline = el.dataset.pf === 'model:' + i ? '2px solid var(--accent, #10b981)' : ''; });
     const say = t => { st.textContent = t; };
     const buf = await downloadModel(m, sfToken, say);
-    const ready = await prepareModel(buf, { phone: !p.model || p.model === 'phone', onStatus: say });
+    const ready = await prepareModel(buf, { phone: !p.model || p.model === 'phone', kind: p.model, name: p.name, onStatus: say });
     say('Saving on ' + p.name + '…');
     p.model3d = await saveModel(db, p.id, 'sketchfab', ready.blob, { engineName: 'Sketchfab: ' + m.name, credit: { name: m.name, author: m.author, licence: m.licence, url: m.url } });
     const filled = await photos360(ready.shots);
