@@ -176,15 +176,15 @@ select option{background:#0F172A;color:#E5E7EB;}
     <section data-screen-label="Product" style="max-width:1320px;margin:0 auto;padding:24px 24px 64px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:32px;align-items:start;">
       <div style="display:flex;flex-direction:column;gap:12px;min-width:0;">
         <button onClick="{{ goHome }}" style="align-self:flex-start;border:none;background:none;color:#94A3B8;font-size:14px;cursor:pointer;padding:4px 0;white-space:nowrap;" style-hover="color:#fff;">← All hardware</button>
-        <div style="position:relative;height:clamp(380px,62vh,620px);border-radius:22px;overflow:hidden;border:1px solid rgba(99,102,241,.3);background:radial-gradient(circle at 50% 40%,rgba(99,102,241,.16),rgba(11,15,25,.3) 65%);">
+        <div style="position:relative;height:clamp(380px,62vh,620px);border-radius:22px;overflow:hidden;border:1px solid rgba(99,102,241,.3);background:#FFFFFF;">
           <sc-if value="{{ tab3d }}" hint-placeholder-val="{{ true }}">
             <div ref="{{ productRef }}" style="position:absolute;inset:0;"></div>
             <div style="position:absolute;top:14px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;pointer-events:none;">
-              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#94A3B8;letter-spacing:.06em;">{{ modelSource }}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748B;letter-spacing:.06em;">{{ modelSource }}</span>
               <button onClick="{{ resetView }}" style="pointer-events:auto;height:30px;border:1px solid rgba(148,163,184,.25);background:rgba(11,15,25,.7);color:#E5E7EB;border-radius:8px;padding:0 10px;font-size:12px;cursor:pointer;">Reset view</button>
             </div>
             <sc-if value="{{ hasCredit }}" hint-placeholder-val="{{ false }}">
-              <a href="{{ creditUrl }}" target="_blank" rel="noopener" style="position:absolute;top:44px;left:16px;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#94A3B8;text-decoration:none;">{{ creditText }}</a>
+              <a href="{{ creditUrl }}" target="_blank" rel="noopener" style="position:absolute;top:44px;left:16px;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#64748B;text-decoration:none;">{{ creditText }}</a>
             </sc-if>
             <div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(11,15,25,.78);border:1px solid rgba(148,163,184,.18);backdrop-filter:blur(10px);">
               <sc-for list="{{ viewModes }}" as="m" hint-placeholder-count="3">
@@ -201,14 +201,14 @@ select option{background:#0F172A;color:#E5E7EB;}
                 <sc-if value="{{ photoIsImg }}" hint-placeholder-val="{{ false }}">
                   <div role="img" aria-label="{{ photoLabel }}" style="position:absolute;inset:6% 4%;background-image:{{ photoBg }};background-size:contain;background-position:center;background-repeat:no-repeat;pointer-events:none;"></div>
                 </sc-if>
-                <span style="position:absolute;top:14px;left:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#A5F3FC;letter-spacing:.08em;">{{ photoLabel }} · DRAG TO TURN</span>
+                <span style="position:absolute;top:14px;left:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#0E7490;letter-spacing:.08em;">{{ photoLabel }} · DRAG TO TURN</span>
               </div>
             </sc-if>
             <sc-if value="{{ noPhotos }}" hint-placeholder-val="{{ true }}">
               <div style="position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;">
                 <div style="max-width:320px;display:flex;flex-direction:column;gap:12px;align-items:center;">
-                  <span style="font-size:16px;font-weight:600;color:#fff;">{{ photoEmptyTitle }}</span>
-                  <span style="font-size:14px;line-height:1.55;color:#94A3B8;">{{ photoEmptyText }}</span>
+                  <span style="font-size:16px;font-weight:600;color:#0F172A;">{{ photoEmptyTitle }}</span>
+                  <span style="font-size:14px;line-height:1.55;color:#64748B;">{{ photoEmptyText }}</span>
                 </div>
               </div>
             </sc-if>
@@ -224,7 +224,7 @@ select option{background:#0F172A;color:#E5E7EB;}
           <sc-if value="{{ showThumbs }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;">
               <sc-for list="{{ photoThumbs }}" as="th" hint-placeholder-count="4">
-                <button onClick="{{ th.pick }}" style="height:36px;border:1px solid {{ th.border }};background:rgba(15,23,42,.6);color:#E5E7EB;border-radius:8px;padding:0 10px;font-size:11px;font-family:'JetBrains Mono',monospace;cursor:pointer;">{{ th.label }}</button>
+                <button onClick="{{ th.pick }}" title="{{ th.label }}" style="width:58px;height:58px;border:2px solid {{ th.border }};background-color:#fff;background-image:{{ th.bg }};background-size:contain;background-position:center;background-repeat:no-repeat;color:#0E7490;border-radius:10px;padding:0 0 2px;font-size:9px;font-family:'JetBrains Mono',monospace;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;">{{ th.label }}</button>
               </sc-for>
             </div>
           </sc-if>
@@ -849,7 +849,10 @@ class Component extends DCLogic {
     try {
       const d = await db.doc('productPhotos/' + pid).get(); if (!d.exists) return;
       const ph = d.data(), a = {};
-      ['front', 'right', 'back', 'left', 'top'].forEach(k => { if (ph[k]) a[k] = { url: ph[k], name: k, isVideo: false }; });
+      // As blob: URLs, because a data URL's ';' would cut the style="background-image:…" binding short.
+      await Promise.all(['front', 'right', 'back', 'left', 'top'].map(async k => { if (typeof ph[k] === 'string' && ph[k]) {
+        const url = ph[k].startsWith('data:') ? URL.createObjectURL(await (await fetch(ph[k])).blob()) : ph[k];
+        a[k] = { url, name: k, isVideo: false }; } }));
       if (Object.keys(a).length) this.setState(s => ({ assets: { ...s.assets, [pid]: { ...a, ...(s.assets[pid] || {}) } } }));
     } catch (e) { this.photoReq[pid] = false; }
   }
@@ -934,9 +937,10 @@ class Component extends DCLogic {
       const fill = new T.DirectionalLight(0x9aa5ff, 0.4); fill.position.set(-4, 2, 6); scene.add(fill);
       const pv = new T.PointLight(0x6366f1, 2.4, 22); pv.position.set(-5, 2.5, -3); scene.add(pv);
       const pc = new T.PointLight(0x06b6d4, 2, 22); pc.position.set(5, 1.5, -4); scene.add(pc);
-      const ring = new T.Mesh(new T.RingGeometry(2.7, 2.74, 128), new T.MeshBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.5, side: T.DoubleSide }));
+      const ring = new T.Mesh(new T.RingGeometry(2.7, opts.interactive ? 2.76 : 2.74, 128), new T.MeshBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.5, side: T.DoubleSide }));
       ring.rotation.x = -Math.PI / 2; ring.position.y = -0.62; scene.add(ring);
-      const grid = new T.GridHelper(14, 28, 0x1f2a44, 0x131b2c); grid.position.y = -0.63; scene.add(grid);
+      // The product page's viewer sits on white with only the ring; the home page keeps the dark grid.
+      if (!opts.interactive) { const grid = new T.GridHelper(14, 28, 0x1f2a44, 0x131b2c); grid.position.y = -0.63; scene.add(grid); }
       let group = null, parts = [];
       const clear = () => { if (group) { scene.remove(group); group.traverse(o => { if (o.geometry) o.geometry.dispose(); }); } layer.innerHTML = ''; parts = []; };
       const mk = (c, o) => { o = o || {}; return new T.MeshStandardMaterial({ color: c, metalness: o.m ?? 0.35, roughness: o.r ?? 0.45, emissive: o.e ?? 0x000000, emissiveIntensity: o.ei ?? 0.8, transparent: true }); };
@@ -1501,7 +1505,7 @@ ${systems}`;
       pdAdRef: this.adRef('pd:' + p.id),
       hasPhotos: photos.length > 0, noPhotos: photos.length === 0, showThumbs: s.mediaTab === 'photos' && photos.length > 1,
       photoSrc: ph ? ph.url : '', photoVidRef: this.vidRef('photo:' + p.id + ':' + s.photoIdx + ':' + (ph && ph.isVideo ? ph.url : ''), ph && ph.isVideo ? ph.url : ''), photoBg: ph && !ph.isVideo ? 'url("' + ph.url + '")' : 'none', photoLabel: ph ? ph.label : '', photoIsVideo: !!(ph && ph.isVideo), photoIsImg: !!(ph && !ph.isVideo),
-      photoThumbs: photos.map((x, i) => ({ label: x.label, border: i === s.photoIdx ? '#06B6D4' : 'rgba(148,163,184,.25)', pick: () => this.setState({ photoIdx: i }) })),
+      photoThumbs: photos.map((x, i) => ({ label: x.label, bg: x.isVideo ? 'none' : 'url("' + x.url + '")', border: i === s.photoIdx ? '#06B6D4' : 'rgba(148,163,184,.25)', pick: () => this.setState({ photoIdx: i }) })),
       photoDown: e => { this._drag = e.clientX; }, photoUp: () => { this._drag = null; },
       photoMove: e => { if (this._drag == null || photos.length < 2) return; const d = e.clientX - this._drag; if (Math.abs(d) > 50) { this._drag = e.clientX; this.setState(st => ({ photoIdx: (st.photoIdx + (d > 0 ? -1 : 1) + photos.length) % photos.length })); } },
       qty: s.qty, qtyUp: () => this.setState(st => ({ qty: st.qty + 1 })), qtyDown: () => this.setState(st => ({ qty: Math.max(1, st.qty - 1) })),
