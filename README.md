@@ -56,14 +56,19 @@ board, chips, battery and camera with the spec labels. Saving photos removes
 any AI model from the product (an AI model would be shown instead).
 `/shop/?product=<id>` opens a product directly.
 
-Find photos online (`shop/findphotos.js`, inside the Phone photos card):
-searches Google Images through [Serper](https://serper.dev) (free key, saved
-only in the admin's browser), drops results named as a different variant
-(Pro Max, Ultra, Plus…), and has Gemini (Firebase AI Logic, same quota as
-Noni) mark straight-on front and back views of the exact phone in up to 24
-results. Views where one phone covers another go to the bottom. Clicking a
-candidate crops it into the Front/Back box. Images are fetched through the
-public `wsrv.nl` proxy, because other sites don't let browsers read them.
+Find & Build 3D (`shop/findphotos.js`, first card in the 3D models tab): one
+click from the product name to a finished 3D model. It searches Google Images
+through [Serper](https://serper.dev) (free key, saved only in the admin's
+browser), drops results named as a different variant (Pro Max, Ultra,
+Plus…), and has Gemini (Firebase AI Logic, same quota as Noni) mark
+straight-on front and back views and the best overall view of the exact
+product in up to 24 results. Phones: the best front and back go straight
+into Phone photos and the 3D phone is built and shown (if only one side is
+found it's filled in and uploading the other builds it). Other shapes: the
+best photo goes into the AI-engine card and the engines start; the admin
+then picks the best model. Clicking another candidate rebuilds. Images are
+fetched through the public `wsrv.nl` proxy, because other sites don't let
+browsers read them.
 
 Payments are manual: customers see the till/paybill number from
 `settings/shop` and the admin marks orders paid after checking M-Pesa.

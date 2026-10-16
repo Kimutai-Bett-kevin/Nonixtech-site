@@ -113,22 +113,22 @@ export async function show3d(app, { db, toast, esc }) {
       </div>
       <div id="m-current" class="muted"></div>
     </div>
+    <div class="card list" id="pf">
+      <b>Find photos online and build the 3D model</b>
+      <span class="muted">Searches Google Images for this product, the AI picks the photos, and the 3D model is built by itself. Phones: the best front and back go on the 3D phone. Other shapes: the best product photo goes to the AI engines. You can click another photo afterwards to rebuild.</span>
+      <div class="row"><input id="pf-q" placeholder="Product name, e.g. itel S25 Ultra" style="max-width:360px"><button class="btn primary" id="pf-go" type="button">Find &amp; Build 3D</button><span class="muted" id="pf-status"></span></div>
+      <details><summary class="muted" style="cursor:pointer">Serper API key (needed once)</summary>
+        <div class="row" style="margin-top:8px"><input id="pf-key" type="password" autocomplete="off" placeholder="Serper API key" value="${esc(serperKey)}" style="max-width:360px">
+        <button class="btn" type="button" id="pf-key-save">Save</button></div>
+        <span class="muted">Sign up free at <a href="https://serper.dev" target="_blank" rel="noopener">serper.dev</a> (2,500 free searches) and copy your API key. It is saved only in this browser, never on the website.</span>
+      </details>
+      <div id="pf-out"></div>
+      <span class="muted">Photos belong to whoever took them. Prefer the maker's official site (shown under each photo).</span>
+    </div>
     <div class="card list">
       <b>Phone photos (recommended for phones)</b>
-      <span class="muted">Puts this phone's real photos on the shop's built-in 3D phone: the front photo becomes the screen and the back photo the back cover. It always looks like a phone, and Exploded and X-Ray still show the battery, board, chips and camera with your spec labels. It starts with this product's 360° photos; click a box to use a different photo. Use photos of the whole phone, straight on, on a plain background.</span>
+      <span class="muted">Puts this phone's real photos on the shop's built-in 3D phone: the front photo becomes the screen and the back photo the back cover. It always looks like a phone, and Exploded and X-Ray still show the battery, board, chips and camera with your spec labels. It starts with this product's 360° photos; click a box to upload a different photo (or use Find &amp; Build 3D above). Use photos of the whole phone, straight on, on a plain background.</span>
       <div class="photos" id="pm-slots" style="max-width:300px"></div>
-      <details id="pf"><summary style="cursor:pointer"><b>Find photos online</b> <span class="muted">· search Google Images and let the AI pick the front and back</span></summary>
-        <div class="list" style="margin-top:10px">
-          <div class="row"><input id="pf-q" placeholder="Phone name, e.g. itel S25 Ultra" style="max-width:360px"><button class="btn" id="pf-go" type="button">Search</button><span class="muted" id="pf-status"></span></div>
-          <details><summary class="muted" style="cursor:pointer">Serper API key (needed once)</summary>
-            <div class="row" style="margin-top:8px"><input id="pf-key" type="password" autocomplete="off" placeholder="Serper API key" value="${esc(serperKey)}" style="max-width:360px">
-            <button class="btn" type="button" id="pf-key-save">Save</button></div>
-            <span class="muted">Sign up free at <a href="https://serper.dev" target="_blank" rel="noopener">serper.dev</a> (2,500 free searches) and copy your API key. It is saved only in this browser, never on the website.</span>
-          </details>
-          <div id="pf-out"></div>
-          <span class="muted">Photos belong to whoever took them. Prefer the maker's official site (shown under each photo).</span>
-        </div>
-      </details>
       <div class="row"><button class="btn primary" id="pm-go" type="button">Build 3D Phone</button><span class="muted" id="pm-note">Runs by itself once a front and a back are picked.</span></div>
       <div id="pm-out"></div>
     </div>
@@ -137,7 +137,7 @@ export async function show3d(app, { db, toast, esc }) {
     <div class="card list">
       <b>AI model from one photo: other shapes</b>
       <label style="max-width:220px">Photo angle<select id="m-angle"><option>Front</option><option>Back</option><option>Side</option></select></label>
-      <span class="muted">Best results: one product, whole item in frame, plain background, good light. The engines remove the background themselves.</span>
+      <span class="muted">Best results: one product, whole item in frame, plain background, good light. The engines remove the background themselves. Find &amp; Build 3D above fills the photo and starts the engines by itself.</span>
       <label class="slot" style="max-width:220px;aspect-ratio:1"><div class="img" id="m-photo">＋</div><div class="lbl"><span id="m-photo-name">Choose photo</span></div>
         <input id="m-file" type="file" accept="image/*" hidden></label>
       <details><summary class="muted" style="cursor:pointer">Hugging Face token (optional, for more free GPU time)</summary>
@@ -197,47 +197,55 @@ export async function show3d(app, { db, toast, esc }) {
   // Find photos online: Serper image search -> Gemini picks front/back views -> click one to use it.
   $('pf-key-save').onclick = () => { serperKey = $('pf-key').value.trim(); try { serperKey ? localStorage.setItem(SERPER_KEY, serperKey) : localStorage.removeItem(SERPER_KEY); } catch (e) {} toast(serperKey ? 'Serper key saved in this browser' : 'Serper key removed'); };
   let pfViews = { front: [], back: [] };
+  const isPhone = () => { const p = products.find(x => x.id === pidSel.value); return !p || !p.model || p.model === 'phone'; };
   $('pf-go').onclick = async () => {
-    const q = $('pf-q').value.trim(), st = $('pf-status'), out = $('pf-out'), btn = $('pf-go');
-    if (!q) { toast('Type the phone name'); return; }
+    const q = $('pf-q').value.trim(), st = $('pf-status'), out = $('pf-out'), btn = $('pf-go'), phone = isPhone();
+    if (!q) { toast('Type the product name'); return; }
     if (!serperKey) { $('pf').querySelector('details').open = true; toast('Add your Serper API key first'); return; }
     btn.disabled = true; out.innerHTML = ''; st.textContent = 'Searching…';
     try {
-      const results = await searchImages(q + ' front and back', serperKey);
+      const results = await searchImages(q + (phone ? ' front and back' : ' product photo'), serperKey);
       if (!results.length) throw new Error('No photos found. Try a different name.');
       pfViews = await pickViews(q, results, s => { st.textContent = s; });
-      st.textContent = pfViews.front.length || pfViews.back.length ? 'Pick a back and a front, or use the AI\'s best picks.' : '';
       const row = (k, label) => {
         const vs = pfViews[k].slice(0, 8);
         return `<div><b>${label}</b> <span class="muted">(${pfViews[k].length} found)</span>
-          ${vs.length ? `<div class="photos" style="margin-top:6px">${vs.map((v, i) => `<div class="slot" data-pf="${k}:${i}" title="Use this as the ${k}">
+          ${vs.length ? `<div class="photos" style="margin-top:6px">${vs.map((v, i) => `<div class="slot" data-pf="${k}:${i}" title="Use this photo">
             <div class="img" data-pf-img="${k}:${i}"><span class="muted" style="font-size:12px">…</span></div>
             <div class="lbl"><a href="${esc(v.link || v.url)}" target="_blank" rel="noopener" class="muted" style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(v.domain || 'source')}</a></div></div>`).join('')}</div>`
             : '<p class="muted" style="margin:6px 0 0">None found. Try another search or upload a photo.</p>'}</div>`;
       };
-      out.innerHTML = (pfViews.front.length && pfViews.back.length ? '<div class="row"><button class="btn primary" id="pf-best" type="button">Use AI\'s best picks and build</button></div>' : '')
-        + row('back', 'Back') + row('front', 'Front');
-      for (const k of ['back', 'front']) pfViews[k].slice(0, 8).forEach((v, i) => cropView(v, 360)
+      const keys = phone ? ['back', 'front'] : ['hero'];
+      out.innerHTML = phone ? row('back', 'Back') + row('front', 'Front') : row('hero', 'Product photo');
+      for (const k of keys) pfViews[k].slice(0, 8).forEach((v, i) => cropView(v, 360)
         .then(u => { const el = out.querySelector(`[data-pf-img="${k}:${i}"]`); if (el) { el.style.backgroundImage = `url('${u}')`; el.innerHTML = ''; } })
         .catch(() => { const el = out.querySelector(`[data-pf="${k}:${i}"]`); if (el) el.remove(); }));
+      // Carry on by itself with the AI's best picks.
+      if (phone && pfViews.front.length && pfViews.back.length) { await pick('back', 0); await pick('front', 0); st.textContent = 'Building with the AI\'s best front and back…'; await build3dPhone(); st.textContent = 'Done. Click another photo to rebuild.'; }
+      else if (phone) {
+        // Fill the side that was found, so only the missing one needs uploading (that upload then builds by itself).
+        if (pfViews.front.length) await pick('front', 0); else if (pfViews.back.length) await pick('back', 0);
+        st.textContent = 'Found ' + (pfViews.front.length ? 'a front but no clean back' : pfViews.back.length ? 'a back but no clean front' : 'no clean front or back') + '. Upload the missing one in Phone photos below (it builds as soon as both are in), or search again.';
+      }
+      else if (pfViews.hero.length) { await pick('hero', 0); st.textContent = 'AI engines are making the 3D model below (30 s to 3 min)…'; }
+      else st.textContent = 'No clean product photo found. Search again or upload one below.';
     } catch (err) { st.textContent = ''; out.innerHTML = `<p class="err">${esc(err.message)}</p>`; }
     btn.disabled = false;
   };
+  // Uses one candidate: phones -> Front/Back box (and builds once both are set); other shapes -> AI photo + engines.
   const pick = async (k, i) => {
     const v = pfViews[k][i]; if (!v) return;
-    $('pf-status').textContent = 'Getting the full-size ' + k + ' photo…';
-    pmPhotos[k] = await cropView(v); drawPmSlots();
+    $('pf-status').textContent = 'Getting the full-size photo…';
+    const url = await cropView(v);
     $('pf-out').querySelectorAll(`[data-pf^="${k}:"]`).forEach(el => { el.style.outline = el.dataset.pf === k + ':' + i ? '2px solid var(--accent, #10b981)' : ''; });
+    if (k === 'hero') { setAiPhoto(await (await fetch(url)).blob(), 'found-photo.jpg', url); runAi(); return; }
+    pmPhotos[k] = url; drawPmSlots();
     $('pf-status').textContent = (k === 'front' ? 'Front' : 'Back') + ' set.' + (pmPhotos.front && pmPhotos.back ? '' : ' Now pick the ' + (k === 'front' ? 'back' : 'front') + '.');
   };
   $('pf-out').onclick = async e => {
-    if (e.target.id === 'pf-best') {
-      try { await pick('back', 0); await pick('front', 0); autoBuild(); } catch (err) { $('pf-status').textContent = 'Could not get those photos. Pick others.'; }
-      return;
-    }
     const tile = e.target.closest('[data-pf]'); if (!tile || e.target.closest('a')) return;
     const [k, i] = tile.dataset.pf.split(':');
-    try { await pick(k, Number(i)); autoBuild(); } catch (err) { $('pf-status').textContent = 'Could not get that photo. Try another one.'; }
+    try { await pick(k, Number(i)); if (k !== 'hero') autoBuild(); } catch (err) { $('pf-status').textContent = 'Could not get that photo. Try another one.'; }
   };
 
   // Front + back -> cut out -> save on the product -> show the finished 3D phone from the shop. No extra clicks.
@@ -272,12 +280,17 @@ export async function show3d(app, { db, toast, esc }) {
   pidSel.onchange = () => { showCurrent(); renderCards(); loadPmPhotos(); openAi(); };
   showCurrent(); loadPmPhotos(); openAi();
 
+  function setAiPhoto(blob, name, url) {
+    photo = blob; photo.name = photo.name || name;
+    $('m-photo').style.backgroundImage = `url("${url || URL.createObjectURL(blob)}")`; $('m-photo').textContent = '';
+    $('m-photo-name').textContent = String(name).slice(0, 28); $('m-go').disabled = false; $('m-go-note').textContent = 'Takes about 30 seconds to 3 minutes.';
+    $('ai-card').open = true;
+  }
   $('m-file').onchange = e => {
     const f = e.target.files[0]; if (!f) return;
     if (!/^image\//.test(f.type)) { toast('Please choose an image file'); return; }
     if (f.size > 10 * 1024 * 1024) { toast('Photo is too large (max 10 MB)'); return; }
-    photo = f; $('m-photo').style.backgroundImage = `url("${URL.createObjectURL(f)}")`; $('m-photo').textContent = '';
-    $('m-photo-name').textContent = f.name.slice(0, 28); $('m-go').disabled = false; $('m-go-note').textContent = 'Takes about 30 seconds to 3 minutes.';
+    setAiPhoto(f, f.name);
   };
   $('m-token-save').onclick = () => { token = $('m-token').value.trim(); try { token ? localStorage.setItem(TOKEN_KEY, token) : localStorage.removeItem(TOKEN_KEY); } catch (e) {} toast(token ? 'Token saved in this browser' : 'Token removed'); };
 
@@ -305,8 +318,9 @@ export async function show3d(app, { db, toast, esc }) {
     e.target.disabled = false; e.target.textContent = 'Use This Model';
   };
 
-  $('m-go').onclick = () => {
-    if (!photo) return;
+  $('m-go').onclick = () => runAi();
+  function runAi() {
+    if (!photo || $('m-go').disabled && Object.values(results).some(r => r.status)) return;
     $('m-go').disabled = true; results = {};
     const t0 = Date.now(), angle = $('m-angle').value.toLowerCase();
     const jobs = Object.keys(engines).map(k => {
@@ -318,6 +332,11 @@ export async function show3d(app, { db, toast, esc }) {
         .finally(() => { if ($('m-cards')) renderCards(); });
     });
     renderCards();
-    Promise.allSettled(jobs).then(() => { const b = $('m-go'); if (b) b.disabled = false; });
-  };
+    Promise.allSettled(jobs).then(() => {
+      const b = $('m-go'); if (b) b.disabled = false;
+      const ok = Object.keys(results).filter(k => results[k].blob), st = $('pf-status');
+      if (st && /AI engines/.test(st.textContent)) st.textContent = ok.length ? 'Done: ' + ok.length + ' model(s) below. Click "Use This Model" on the best one.' : 'The AI engines could not make a model (see below).';
+      if (ok.length) document.querySelector(`[data-engine="${ok[0]}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
 }

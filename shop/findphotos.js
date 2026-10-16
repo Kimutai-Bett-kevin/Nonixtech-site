@@ -1,6 +1,6 @@
-// "Find photos online" for the admin's Phone photos card: searches Google Images through Serper, has Gemini
-// (Firebase AI Logic, same as Noni Sales AI) pick out straight-on front and back views of the exact phone and
-// mark where they are in each image (press photos often show both side by side), then crops them.
+// "Find photos online" for the admin's 3D models tab: searches Google Images through Serper, has Gemini (Firebase
+// AI Logic, same as Noni Sales AI) mark straight-on front and back views (phones) and the best overall view (other
+// products) of the exact model in each image (press photos often show several side by side), then crops them.
 // Other sites don't let a browser read their images, so they're fetched through the public wsrv.nl image proxy.
 
 const FB = { apiKey: 'AIzaSyBxjSk2_BO2Np1PD6nYvBVKqAfSGGPLPms', authDomain: 'nonix-technologies.firebaseapp.com', projectId: 'nonix-technologies', appId: '1:1020109167752:web:4bd5e746b33ba91a3a933d' };
@@ -45,14 +45,15 @@ function gemini() {
 }
 
 /**
- * Has Gemini check the search results. Returns { front: [...], back: [...] }, each a list of
+ * Has Gemini check the search results. Returns { front, back, hero }, each a list of
  * { url, domain, link, box: [ymin, xmin, ymax, xmax] (0-1000), score }, best first.
  */
 // Variant words: a result named "... Pro Max" isn't the "Pro" the admin searched for.
 const VARIANTS = ['pro', 'max', 'ultra', 'plus', 'mini', 'lite', 'fe', 'neo', 'edge', 'fold', 'flip'];
 const words = t => new Set(String(t).toLowerCase().replace(/\+/g, ' plus ').split(/[^a-z0-9]+/).filter(Boolean));
+const safeDecode = u => { try { return decodeURIComponent(u); } catch (e) { return u; } };
 function sameVariant(phoneName, r) {
-  const want = words(phoneName), got = words(r.title + ' ' + decodeURIComponent(r.url.split('?')[0]).replace(/[-_]/g, ' '));
+  const want = words(phoneName), got = words(r.title + ' ' + safeDecode(r.url.split('?')[0]).replace(/[-_]/g, ' '));
   return VARIANTS.every(v => want.has(v) || !got.has(v));
 }
 
@@ -65,15 +66,16 @@ export async function pickViews(phoneName, results, onStatus) {
   const list = loaded.filter(Boolean);
   if (!list.length) throw new Error('None of the photos could be loaded.');
   onStatus && onStatus('AI is checking ' + list.length + ' photos…');
-  const prompt = `These are ${list.length} images from an image search for the phone "${phoneName}", numbered 0 to ${list.length - 1} in order.
+  const prompt = `These are ${list.length} images from an image search for the product "${phoneName}", numbered 0 to ${list.length - 1} in order.
 For each image, decide:
-- match: true only if it shows exactly this phone model. Variants are different models: "Pro" is not "Pro Max", "S25" is not "S25 Ultra" or "S25+". Not a case or accessory on its own.
-- front: the box of ONE straight-on view of the phone's screen side, or null.
-- back: the box of ONE straight-on view of the phone's back, or null.
-  A view only counts if the WHOLE phone outline is visible: not tilted or angled, not cut off by the image edge, and not partly covered by another phone, a hand, text or any object. If the only views overlap each other (e.g. a front phone in front of a back phone), give null for the covered one.
-- score: 1 to 5, how clean the view is for cutting out (5 = plain background, sharp, nothing near it).
-Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000 and must contain the whole phone with a little margin.
-Reply with only JSON: [{"i": 0, "match": true, "front": [..] or null, "back": [..] or null, "score": 4}, ...]`;
+- match: true only if it shows exactly this product model. Variants are different models: "Pro" is not "Pro Max", "S25" is not "S25 Ultra" or "S25+". Not a case or accessory on its own.
+- front: the box of ONE straight-on view of the product's front (a phone's screen side), or null.
+- back: the box of ONE straight-on view of the product's back, or null.
+  A front or back view only counts if the WHOLE outline is visible: not tilted or angled, not cut off by the image edge, and not partly covered by another phone, a hand, text or any object. If the only views overlap each other (e.g. a front phone in front of a back phone), give null for the covered one.
+- hero: the box of the single best view of the whole product for turning into a 3D model (a three-quarter angle showing the front and one side is best; whole product visible, not covered, not cut off), or null.
+- score: 1 to 5, how clean the views are for cutting out (5 = plain background, sharp, nothing near it).
+Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000 and must contain the whole product with a little margin.
+Reply with only JSON: [{"i": 0, "match": true, "front": [..] or null, "back": [..] or null, "hero": [..] or null, "score": 4}, ...]`;
   const parts = [{ text: prompt }, ...list.map((r, i) => [{ text: 'Image ' + i }, { inlineData: { mimeType: 'image/jpeg', data: r.b64 } }]).flat()];
   const g = await gemini(); let out = null, lastErr = null;
   // The full model is often briefly overloaded ("high demand"): retry it before falling back to lite.
@@ -92,7 +94,7 @@ Reply with only JSON: [{"i": 0, "match": true, "front": [..] or null, "back": [.
   }
   if (!out) throw new Error('The AI could not check the photos' + (lastErr && /quota|429/i.test(String(lastErr)) ? ' (free AI limit reached, try again in a minute).' : '.'));
   const ok = b => Array.isArray(b) && b.length === 4 && b.every(n => typeof n === 'number') && b[2] - b[0] > 80 && b[3] - b[1] > 30;
-  const views = { front: [], back: [] };
+  const views = { front: [], back: [], hero: [] };
   // Front and back boxes that overlap mean one phone covers the other: push both to the bottom of the list.
   const overlap = (a, b) => { const w = Math.min(a[3], b[3]) - Math.max(a[1], b[1]), h = Math.min(a[2], b[2]) - Math.max(a[0], b[0]);
     return w > 0 && h > 0 ? (w * h) / Math.min((a[3] - a[1]) * (a[2] - a[0]), (b[3] - b[1]) * (b[2] - b[0])) : 0; };
@@ -100,8 +102,10 @@ Reply with only JSON: [{"i": 0, "match": true, "front": [..] or null, "back": [.
     const r = list[o && o.i]; if (!r || !o.match) return;
     const covered = ok(o.front) && ok(o.back) && overlap(o.front, o.back) > 0.03;
     for (const k of ['front', 'back']) if (ok(o[k])) views[k].push({ url: r.url, domain: r.domain, link: r.link, box: o[k], score: covered ? 0 : Number(o.score) || 1 });
+    if (ok(o.hero)) views.hero.push({ url: r.url, domain: r.domain, link: r.link, box: o.hero, score: Number(o.score) || 1 });
   });
-  for (const k of ['front', 'back']) views[k].sort((a, b) => b.score - a.score);
+  for (const k of ['front', 'back', 'hero']) views[k].sort((a, b) => b.score - a.score);
+  if (!views.hero.length) views.hero = [...views.front, ...views.back]; // the AI doesn't always mark a best view
   return views;
 }
 
