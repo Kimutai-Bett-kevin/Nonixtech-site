@@ -183,6 +183,9 @@ select option{background:#0F172A;color:#E5E7EB;}
               <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#94A3B8;letter-spacing:.06em;">{{ modelSource }}</span>
               <button onClick="{{ resetView }}" style="pointer-events:auto;height:30px;border:1px solid rgba(148,163,184,.25);background:rgba(11,15,25,.7);color:#E5E7EB;border-radius:8px;padding:0 10px;font-size:12px;cursor:pointer;">Reset view</button>
             </div>
+            <sc-if value="{{ hasCredit }}" hint-placeholder-val="{{ false }}">
+              <a href="{{ creditUrl }}" target="_blank" rel="noopener" style="position:absolute;top:44px;left:16px;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#94A3B8;text-decoration:none;">{{ creditText }}</a>
+            </sc-if>
             <div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(11,15,25,.78);border:1px solid rgba(148,163,184,.18);backdrop-filter:blur(10px);">
               <sc-for list="{{ viewModes }}" as="m" hint-placeholder-count="3">
                 <button onClick="{{ m.pick }}" style="height:34px;border:none;border-radius:8px;padding:0 14px;font-size:13px;font-weight:600;cursor:pointer;background:{{ m.bg }};color:{{ m.fg }};white-space:nowrap;">{{ m.label }}</button>
@@ -825,7 +828,7 @@ class Component extends DCLogic {
         let o = 0; parts.forEach(x => { out.set(x, o); o += x.length; }); buf = out.buffer;
         if (cache) { (await cache.keys()).forEach(r => { const u = new URL(r.url).pathname; if (u.startsWith('/__nxmodel/' + pid + '/') && u !== key) cache.delete(r); }); await cache.put(key, new Response(buf.slice(0))).catch(() => {}); }
       }
-      this.setState(s => ({ assets: { ...s.assets, [pid]: { ...(s.assets[pid] || {}), model: { name: 'db:' + m.ver, label: 'AI 3D MODEL · DRAG · SCROLL TO ZOOM', buf, yaw: m.yaw ?? (m.engine === 'sf3d' ? Math.PI : 0) } } } }));
+      this.setState(s => ({ assets: { ...s.assets, [pid]: { ...(s.assets[pid] || {}), model: { name: 'db:' + m.ver, label: (m.credit ? '3D MODEL' : 'AI 3D MODEL') + ' · DRAG · SCROLL TO ZOOM', credit: m.credit || null, buf, yaw: m.yaw ?? (m.engine === 'sf3d' ? Math.PI : 0) } } } }));
     } catch (e) { console.warn('Could not load 3D model', e); this.modelReq[pid] = null; }
   }
   // Phone photos for the built-in 3D phone (screen + back cover), saved from the admin's 3D models tab.
@@ -943,7 +946,7 @@ class Component extends DCLogic {
       const register = (obj, off, label, kind) => {
         const p = { obj, home: obj.position.clone(), off, kind: kind || 'inner', mats: [], edges: [] };
         obj.traverse(o => { if (o.isMesh) {
-          if (kind === 'gl') o.material = Array.isArray(o.material) ? o.material.map(m => m.clone()) : o.material.clone();
+          if (kind === 'gl' || kind === 'glshell') o.material = Array.isArray(o.material) ? o.material.map(m => m.clone()) : o.material.clone();
           (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.transparent = true; p.mats.push(m); });
           if (p.kind !== 'inner') { const e = new T.LineSegments(new T.EdgesGeometry(o.geometry, 30), new T.LineBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0 })); o.add(e); p.edges.push(e.material); }
         } });
@@ -955,8 +958,24 @@ class Component extends DCLogic {
       const frameCam = (t, c) => { tgtHome = new T.Vector3(...t); camHome = new T.Vector3(...c); api.reset(); };
       const build = () => {
         clear(); group = new T.Group(); scene.add(group); scene.environment = null;
+        const shell = mk(0x1b2232, { m: 0.75, r: 0.3 }), shell2 = mk(0x283149, { m: 0.7, r: 0.35 });
+        const pcb = mk(0x0d3b2e, { m: 0.2, r: 0.7 }), chip = mk(0x111827, { m: 0.4, r: 0.4, e: 0x6366f1, ei: 0.6 }), chipC = mk(0x0f172a, { m: 0.4, r: 0.4, e: 0x06b6d4, ei: 0.55 });
+        const batt = mk(0x334155, { m: 0.8, r: 0.3, e: 0x10b981, ei: 0.14 }), glass = mk(0x05070d, { m: 0.3, r: 0.06, e: 0x1e1b4b, ei: 0.25 }), led = mk(0x06b6d4, { e: 0x06b6d4, ei: 1.2 });
+        // A phone's inside: logic board, chips, battery and camera module, for Exploded and X-Ray. Built for a 1.5 x 3
+        // phone centred at y 0.9; k scales them to fit a downloaded model.
+        const phoneInner = (camPos, camOff, k = 1) => {
+          const at = q => [q[0] * k, 0.9 + (q[1] - 0.9) * k, q[2] * k], n = parts.length;
+          add(box(1.28, 1.15, 0.025, pcb), at([0, 1.7, 0.01]), [0, 0.15, 0.75], L('board', 'Logic board'));
+          add(box(0.36, 0.36, 0.05, chip), at([0, 1.78, 0.04]), [0, 0.35, 1.1], L('soc', 'SoC'));
+          add(box(0.3, 0.22, 0.04, chipC), at([-0.42, 1.52, 0.04]), [-0.6, 0.1, 1.05], L('ram', 'RAM'));
+          add(box(0.3, 0.22, 0.04, chipC), at([0.42, 1.52, 0.04]), [0.6, 0.1, 1.05], L('storage', 'Storage'));
+          add(box(1.2, 1.45, 0.06, batt), at([0, 0.42, 0]), [0, -0.35, 0.45], L('battery', 'Battery'));
+          const cam = new T.Group(); [[-0.12, 0.12], [0.12, -0.12], [-0.12, -0.12]].forEach(([x, y]) => { const c = cyl(0.1, 0.07, chip); c.rotation.x = Math.PI / 2; c.position.set(x, y, 0); cam.add(c); });
+          add(cam, at(camPos), camOff, L('camera', 'Camera module'));
+          parts.slice(n).forEach(p => p.obj.scale.setScalar(k));
+        };
         if (api.gltf && T.GLTFLoader) {
-          frameCam([0, 0.9, 0], [3.8, 2.8, 6.6]);
+          if (api.kind === 'phone') frameCam([0, 0.9, 0], opts.interactive ? [-4.2, 2.6, -5.4] : [3.6, 2.4, 6.6]); else frameCam([0, 0.9, 0], [3.8, 2.8, 6.6]);
           new T.GLTFLoader().parse(api.gltf.slice(0), '', g => {
             if (!api.alive) return;
             const root = g.scene; root.rotation.y = api.yaw || 0; group.add(root); // turn so the photographed side faces the camera
@@ -975,6 +994,22 @@ class Component extends DCLogic {
             root.position.sub(c); root.position.y += 0.9; root.updateMatrixWorld(true);
             const center = new T.Box3().setFromObject(root).getCenter(new T.Vector3());
             const meshes = []; root.traverse(o => { if (o.isMesh) meshes.push(o); });
+            if (api.kind === 'phone') {
+              // A real phone model (screen facing +z): parts on the front come off forwards, parts on the back
+              // backwards, the frame stays, and the built-in inner parts sit inside, so Exploded and X-Ray show them.
+              const bb = new T.Box3().setFromObject(root), sz = bb.getSize(new T.Vector3()), cz = (bb.min.z + bb.max.z) / 2;
+              let front = null, back = null;
+              meshes.forEach(m => {
+                const mb = new T.Box3().setFromObject(m), wc = mb.getCenter(new T.Vector3()), ms = mb.getSize(new T.Vector3()), area = ms.x * ms.y;
+                const side = wc.z > cz + sz.z * 0.2 ? 1 : wc.z < cz - sz.z * 0.2 ? -1 : 0;
+                const a = m.parent.worldToLocal(wc.clone()), b = m.parent.worldToLocal(wc.clone().add(new T.Vector3(0, 0, side * 1.5)));
+                const p = register(m, b.sub(a), null, 'glshell');
+                if (side > 0 && (!front || area > front.area)) front = { p, area }; if (side < 0 && (!back || area > back.area)) back = { p, area };
+              });
+              if (front) mkLabel(L('display', 'Display'), front.p); if (back) mkLabel(L('back', 'Back cover'), back.p);
+              phoneInner([0.36, 2.0, -0.02], [-1.5, 0.55, -0.3], Math.min(sz.y / 3, sz.x / 1.5));
+              return;
+            }
             meshes.forEach((m, i) => {
               const wc = new T.Box3().setFromObject(m).getCenter(new T.Vector3());
               let dir = wc.clone().sub(center); if (dir.length() < 0.01) dir.set(0, 1, 0); dir.normalize().multiplyScalar(1.3);
@@ -984,9 +1019,6 @@ class Component extends DCLogic {
           }, () => { api.gltf = null; api.dirty = true; });
           return;
         }
-        const shell = mk(0x1b2232, { m: 0.75, r: 0.3 }), shell2 = mk(0x283149, { m: 0.7, r: 0.35 });
-        const pcb = mk(0x0d3b2e, { m: 0.2, r: 0.7 }), chip = mk(0x111827, { m: 0.4, r: 0.4, e: 0x6366f1, ei: 0.6 }), chipC = mk(0x0f172a, { m: 0.4, r: 0.4, e: 0x06b6d4, ei: 0.55 });
-        const batt = mk(0x334155, { m: 0.8, r: 0.3, e: 0x10b981, ei: 0.14 }), glass = mk(0x05070d, { m: 0.3, r: 0.06, e: 0x1e1b4b, ei: 0.25 }), led = mk(0x06b6d4, { e: 0x06b6d4, ei: 1.2 });
         if (api.kind === 'phone' && api.skin) {
           // The phone's own photos on a rounded body: front photo = screen, back photo = back cover.
           // Width follows the photos' proportions (height stays 3, so the inner parts still fit).
@@ -1008,27 +1040,15 @@ class Component extends DCLogic {
           add(slab(0.05, [photo(sk.front, false), frame]), [0, 0.9, 0.09], [0, 0, 1.5], L('display', 'Display'), 'shell');
           add(slab(0.1, frame), [0, 0.9, 0], [0, 0, 0], null, 'shell');
           add(slab(0.04, [photo(sk.back, true), frame]), [0, 0.9, -0.08], [0, 0, -1.5], L('back', 'Back cover'), 'shell');
-          add(box(1.28, 1.15, 0.025, pcb), [0, 1.7, 0.01], [0, 0.15, 0.75], L('board', 'Logic board'));
-          add(box(0.36, 0.36, 0.05, chip), [0, 1.78, 0.04], [0, 0.35, 1.1], L('soc', 'SoC'));
-          add(box(0.3, 0.22, 0.04, chipC), [-0.42, 1.52, 0.04], [-0.6, 0.1, 1.05], L('ram', 'RAM'));
-          add(box(0.3, 0.22, 0.04, chipC), [0.42, 1.52, 0.04], [0.6, 0.1, 1.05], L('storage', 'Storage'));
-          add(box(1.2, 1.45, 0.06, batt), [0, 0.42, 0], [0, -0.35, 0.45], L('battery', 'Battery'));
           // Camera module sits inside the body (the back photo shows the real cameras); it comes out when exploded.
-          const cam = new T.Group(); [[-0.12, 0.12], [0.12, -0.12], [-0.12, -0.12]].forEach(([x, y]) => { const c = cyl(0.1, 0.07, chip); c.rotation.x = Math.PI / 2; c.position.set(x, y, 0); cam.add(c); });
-          add(cam, [0.36, 2.0, -0.02], [-1.5, 0.55, -0.3], L('camera', 'Camera module'));
+          phoneInner([0.36, 2.0, -0.02], [-1.5, 0.55, -0.3]);
         } else if (api.kind === 'phone') {
           frameCam([0, 0.9, 0], opts.interactive ? [-4.2, 2.6, -5.4] : [3.6, 2.4, 6.6]);
           add(box(1.5, 3, 0.05, glass), [0, 0.9, 0.09], [0, 0, 1.5], L('display', 'Display'), 'shell');
           add(box(1.5, 3, 0.1, shell), [0, 0.9, 0], [0, 0, 0], null, 'shell');
           add(box(1.5, 3, 0.04, shell2), [0, 0.9, -0.08], [0, 0, -1.5], L('back', 'Back glass'), 'shell');
           const isl = box(0.62, 0.62, 0.04, shell2); add(isl, [-0.36, 2.0, -0.12], [0, 0, -1.9], null, 'shell');
-          add(box(1.28, 1.15, 0.025, pcb), [0, 1.7, 0.01], [0, 0.15, 0.75], L('board', 'Logic board'));
-          add(box(0.36, 0.36, 0.05, chip), [0, 1.78, 0.04], [0, 0.35, 1.1], L('soc', 'SoC'));
-          add(box(0.3, 0.22, 0.04, chipC), [-0.42, 1.52, 0.04], [-0.6, 0.1, 1.05], L('ram', 'RAM'));
-          add(box(0.3, 0.22, 0.04, chipC), [0.42, 1.52, 0.04], [0.6, 0.1, 1.05], L('storage', 'Storage'));
-          add(box(1.2, 1.45, 0.06, batt), [0, 0.42, 0], [0, -0.35, 0.45], L('battery', 'Battery'));
-          const cam = new T.Group(); [[-0.12, 0.12], [0.12, -0.12], [-0.12, -0.12]].forEach(([x, y]) => { const c = cyl(0.1, 0.07, chip); c.rotation.x = Math.PI / 2; c.position.set(x, y, 0); cam.add(c); });
-          add(cam, [-0.36, 2.0, -0.12], [0, 0.3, -2.4], L('camera', 'Camera module'));
+          phoneInner([-0.36, 2.0, -0.12], [0, 0.3, -2.4]);
         } else if (api.kind === 'laptop') {
           frameCam([0, 0.1, 0], [4.8, 3.6, 6.2]);
           add(box(3.2, 0.05, 2.1, shell), [0, -0.56, 0], [0, -0.9, 0], L('bottom', 'Bottom case'), 'shell');
@@ -1055,8 +1075,8 @@ class Component extends DCLogic {
           add(box(0.2, 0.02, 0.2, chip), [-0.55, -0.43, -0.55], [-0.5, 0.8, -0.5], L('wifi', 'Wi-Fi module'));
         }
       };
-      const tgt = { shell: { assembled: 1, exploded: 0.4, xray: 0.07 }, inner: { assembled: 1, exploded: 1, xray: 1 }, gl: { assembled: 1, exploded: 1, xray: 0.28 } };
-      const edgeT = { shell: { assembled: 0, exploded: 0.25, xray: 0.9 }, gl: { assembled: 0, exploded: 0, xray: 0.75 }, inner: {} };
+      const tgt = { shell: { assembled: 1, exploded: 0.4, xray: 0.07 }, inner: { assembled: 1, exploded: 1, xray: 1 }, gl: { assembled: 1, exploded: 1, xray: 0.28 }, glshell: { assembled: 1, exploded: 0.5, xray: 0.12 } };
+      const edgeT = { shell: { assembled: 0, exploded: 0.25, xray: 0.9 }, gl: { assembled: 0, exploded: 0, xray: 0.75 }, glshell: { assembled: 0, exploded: 0.15, xray: 0.7 }, inner: {} };
       const v = new T.Vector3(); let e = 0, last = performance.now(), raf;
       const frame = now => {
         if (!api.alive) return;
@@ -1474,6 +1494,8 @@ ${systems}`;
       tab3d: s.mediaTab === '3d', tabPhotos: s.mediaTab === 'photos', tabAd: s.mediaTab === 'ad',
       mediaTabs: [['3d', '3D model'], ['photos', '360° photos'], ['ad', 'Spec ad']].map(([v, l]) => ({ label: l, ...chip(s.mediaTab === v), pick: () => this.setState({ mediaTab: v }) })),
       viewModes: [['assembled', 'Assembled'], ['exploded', 'Exploded'], ['xray', 'X-Ray']].map(([v, l]) => ({ label: l, ...on(s.mode === v), pick: () => this.setState({ mode: v }) })),
+      hasCredit: !!(assets.model && assets.model.credit), creditUrl: assets.model && assets.model.credit ? assets.model.credit.url : '',
+      creditText: assets.model && assets.model.credit ? '"' + assets.model.credit.name + '" by ' + assets.model.credit.author + ' · ' + assets.model.credit.licence : '',
       modelSource: assets.model ? (assets.model.label || 'CUSTOM MODEL · ' + assets.model.name.toUpperCase()) : 'DRAG · SCROLL TO ZOOM · RIGHT-DRAG TO PAN',
       resetView: () => this.viewers.product && this.viewers.product.reset(),
       pdAdRef: this.adRef('pd:' + p.id),

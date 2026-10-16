@@ -27,7 +27,7 @@ export async function searchImages(query, key) {
 function loadImage(src) {
   return new Promise((res, rej) => { const img = new Image(); img.crossOrigin = 'anonymous'; img.onload = () => res(img); img.onerror = () => rej(new Error('image')); img.src = src; });
 }
-async function asBase64(url) {
+export async function asBase64(url) {
   const img = await loadImage(proxied(url, THUMB)), c = document.createElement('canvas');
   c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(img, 0, 0);
   return c.toDataURL('image/jpeg', 0.85).split(',')[1];
@@ -44,15 +44,37 @@ function gemini() {
   return gem;
 }
 
+
+// Sends parts to Gemini and returns its JSON reply. The full model is often briefly overloaded ("high demand"):
+// retry it before falling back to lite; on the daily limit go straight to lite.
+export async function askJson(parts, onStatus) {
+  const g = await gemini(); let lastErr = null;
+  const tries = [MODELS[0], MODELS[0], MODELS[0], MODELS[1]];
+  for (let t = 0; t < tries.length; t++) {
+    const name = tries[t];
+    try {
+      const model = g.m.getGenerativeModel(g.ai, { model: name, generationConfig: { responseMimeType: 'application/json', temperature: 0 } });
+      const text = (await model.generateContent(parts)).response.text();
+      const a = text.search(/[\[{]/), z = Math.max(text.lastIndexOf(']'), text.lastIndexOf('}'));
+      return JSON.parse(text.slice(a, z + 1));
+    } catch (e) {
+      lastErr = e; console.warn('AI error (' + name + ')', e);
+      if (/429|quota/i.test(String(e)) && name === MODELS[0]) t = tries.length - 2;
+      else if (/500|503|overload|demand/i.test(String(e))) { onStatus && onStatus('AI is busy, retrying…'); await new Promise(r => setTimeout(r, 2500)); }
+    }
+  }
+  throw new Error('The AI could not check the results' + (lastErr && /quota|429/i.test(String(lastErr)) ? ' (free AI limit reached, try again in a minute).' : '.'));
+}
+
 /**
- * Has Gemini check the search results. Returns { front, back, hero }, each a list of
+ * Has Gemini check the search results. Returns { front, back, side, hero }, each a list of
  * { url, domain, link, box: [ymin, xmin, ymax, xmax] (0-1000), score }, best first.
  */
 // Variant words: a result named "... Pro Max" isn't the "Pro" the admin searched for.
 const VARIANTS = ['pro', 'max', 'ultra', 'plus', 'mini', 'lite', 'fe', 'neo', 'edge', 'fold', 'flip'];
 const words = t => new Set(String(t).toLowerCase().replace(/\+/g, ' plus ').split(/[^a-z0-9]+/).filter(Boolean));
 const safeDecode = u => { try { return decodeURIComponent(u); } catch (e) { return u; } };
-function sameVariant(phoneName, r) {
+export function sameVariant(phoneName, r) {
   const want = words(phoneName), got = words(r.title + ' ' + safeDecode(r.url.split('?')[0]).replace(/[-_]/g, ' '));
   return VARIANTS.every(v => want.has(v) || !got.has(v));
 }
@@ -72,29 +94,15 @@ For each image, decide:
 - front: the box of ONE straight-on view of the product's front (a phone's screen side), or null.
 - back: the box of ONE straight-on view of the product's back, or null.
   A front or back view only counts if the WHOLE outline is visible: not tilted or angled, not cut off by the image edge, and not partly covered by another phone, a hand, text or any object. If the only views overlap each other (e.g. a front phone in front of a back phone), give null for the covered one.
+- side: the box of ONE straight-on view of the product's side edge (or, for a laptop or box, its side), or null.
 - hero: the box of the single best view of the whole product for turning into a 3D model (a three-quarter angle showing the front and one side is best; whole product visible, not covered, not cut off), or null.
 - score: 1 to 5, how clean the views are for cutting out (5 = plain background, sharp, nothing near it).
 Boxes are [ymin, xmin, ymax, xmax] scaled 0-1000 and must contain the whole product with a little margin.
-Reply with only JSON: [{"i": 0, "match": true, "front": [..] or null, "back": [..] or null, "hero": [..] or null, "score": 4}, ...]`;
+Reply with only JSON: [{"i": 0, "match": true, "front": [..] or null, "back": [..] or null, "side": [..] or null, "hero": [..] or null, "score": 4}, ...]`;
   const parts = [{ text: prompt }, ...list.map((r, i) => [{ text: 'Image ' + i }, { inlineData: { mimeType: 'image/jpeg', data: r.b64 } }]).flat()];
-  const g = await gemini(); let out = null, lastErr = null;
-  // The full model is often briefly overloaded ("high demand"): retry it before falling back to lite.
-  const tries = [MODELS[0], MODELS[0], MODELS[0], MODELS[1]];
-  for (let t = 0; t < tries.length; t++) {
-    const name = tries[t];
-    try {
-      const model = g.m.getGenerativeModel(g.ai, { model: name, generationConfig: { responseMimeType: 'application/json', temperature: 0 } });
-      const text = (await model.generateContent(parts)).response.text();
-      out = JSON.parse(text.slice(text.indexOf('['), text.lastIndexOf(']') + 1)); break;
-    } catch (e) {
-      lastErr = e; console.warn('Photo finder AI error (' + name + ')', e);
-      if (/429|quota/i.test(String(e)) && name === MODELS[0]) t = tries.length - 2; // daily limit: go straight to lite
-      else if (/500|503|overload|demand/i.test(String(e))) { onStatus && onStatus('AI is busy, retrying…'); await new Promise(r => setTimeout(r, 2500)); }
-    }
-  }
-  if (!out) throw new Error('The AI could not check the photos' + (lastErr && /quota|429/i.test(String(lastErr)) ? ' (free AI limit reached, try again in a minute).' : '.'));
+  const out = await askJson(parts, onStatus);
   const ok = b => Array.isArray(b) && b.length === 4 && b.every(n => typeof n === 'number') && b[2] - b[0] > 80 && b[3] - b[1] > 30;
-  const views = { front: [], back: [], hero: [] };
+  const views = { front: [], back: [], side: [], hero: [] };
   // Front and back boxes that overlap mean one phone covers the other: push both to the bottom of the list.
   const overlap = (a, b) => { const w = Math.min(a[3], b[3]) - Math.max(a[1], b[1]), h = Math.min(a[2], b[2]) - Math.max(a[0], b[0]);
     return w > 0 && h > 0 ? (w * h) / Math.min((a[3] - a[1]) * (a[2] - a[0]), (b[3] - b[1]) * (b[2] - b[0])) : 0; };
@@ -102,9 +110,10 @@ Reply with only JSON: [{"i": 0, "match": true, "front": [..] or null, "back": [.
     const r = list[o && o.i]; if (!r || !o.match) return;
     const covered = ok(o.front) && ok(o.back) && overlap(o.front, o.back) > 0.03;
     for (const k of ['front', 'back']) if (ok(o[k])) views[k].push({ url: r.url, domain: r.domain, link: r.link, box: o[k], score: covered ? 0 : Number(o.score) || 1 });
+    if (Array.isArray(o.side) && o.side.length === 4 && o.side[2] - o.side[0] > 80) views.side.push({ url: r.url, domain: r.domain, link: r.link, box: o.side, score: Number(o.score) || 1 });
     if (ok(o.hero)) views.hero.push({ url: r.url, domain: r.domain, link: r.link, box: o.hero, score: Number(o.score) || 1 });
   });
-  for (const k of ['front', 'back', 'hero']) views[k].sort((a, b) => b.score - a.score);
+  for (const k of ['front', 'back', 'side', 'hero']) views[k].sort((a, b) => b.score - a.score);
   if (!views.hero.length) views.hero = [...views.front, ...views.back]; // the AI doesn't always mark a best view
   return views;
 }

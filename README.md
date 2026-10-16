@@ -70,6 +70,23 @@ then picks the best model. Clicking another candidate rebuilds. Images are
 fetched through the public `wsrv.nl` proxy, because other sites don't let
 browsers read them.
 
+Real 3D models (`shop/findmodel.js`): Find & Build 3D also searches
+Sketchfab's downloadable models (search needs no key) at the same time,
+keeps only licences that allow shop use (CC BY, BY-SA, BY-ND, CC0, Standard)
+and names with every variant word searched for, and has Gemini check the
+previews. With the admin's free Sketchfab API token (saved only in their
+browser) the best one is downloaded as .glb, phones are stood upright with
+the screen facing front (Gemini looks at both faces), textures are shrunk
+to 1024 px JPEG, and it's saved like an AI model with `model3d.credit`
+(name, author, licence, link), shown under the model in the shop as the
+licences require. Up to three models are tried before falling back to the
+photo methods. On phone models, Exploded moves front parts forwards and back
+parts backwards and shows the built-in board, chips, battery and camera
+inside with the spec labels; X-Ray makes the shell see-through. The empty
+360° photo boxes (`productPhotos`) are filled with the found front, back and
+side photos and with renders of the model from each side; photos already
+there are kept.
+
 Payments are manual: customers see the till/paybill number from
 `settings/shop` and the admin marks orders paid after checking M-Pesa.
 

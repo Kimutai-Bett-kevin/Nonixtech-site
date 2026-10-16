@@ -8,8 +8,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generate, engines } from './g3d.js';
 import { makeSkin } from './photo3d.js';
 import { searchImages, pickViews, cropView } from './findphotos.js';
+import { searchModels, pickModels, downloadModel, prepareModel } from './findmodel.js';
 
-const CHUNK = 900 * 1024, MAX_BYTES = 15 * 1024 * 1024, TOKEN_KEY = 'nonixHfToken', SERPER_KEY = 'nonixSerperKey';
+const CHUNK = 900 * 1024, MAX_BYTES = 15 * 1024 * 1024, TOKEN_KEY = 'nonixHfToken', SERPER_KEY = 'nonixSerperKey', SKETCHFAB_KEY = 'nonixSketchfabToken';
+const SLOTS360 = ['front', 'right', 'back', 'left', 'top']; // the shop's 360° photos (productPhotos/{pid})
 const mb = n => (n / 1048576).toFixed(1) + ' MB';
 const pad = i => String(i).padStart(3, '0');
 
@@ -58,14 +60,14 @@ export function fixMaterials(root) {
 }
 
 // ---------- Firestore storage ----------
-export async function saveModel(db, pid, engine, blob) {
+export async function saveModel(db, pid, engine, blob, extra = {}) {
   const u8 = new Uint8Array(await blob.arrayBuffer());
   if (u8.length > MAX_BYTES) throw new Error('Model is ' + mb(u8.length) + '; the limit is ' + mb(MAX_BYTES) + '.');
   const prev = await db.doc('productModels/' + pid).get().then(d => d.exists ? d.data() : null).catch(() => null);
   const ver = Date.now().toString(36), n = Math.ceil(u8.length / CHUNK), B = firebase.firestore.Blob;
   for (let i = 0; i < n; i++)
     await db.doc(`productModels/${pid}/chunks/${ver}_${pad(i)}`).set({ ver, i, data: B.fromUint8Array(u8.subarray(i * CHUNK, (i + 1) * CHUNK)) });
-  const meta = { ver, chunks: n, bytes: u8.length, engine, engineName: (engines[engine] || {}).name || (engine === 'photo' ? 'Photo model' : engine), yaw: (engines[engine] || {}).yaw || 0 };
+  const meta = { ver, chunks: n, bytes: u8.length, engine, engineName: (engines[engine] || {}).name || (engine === 'photo' ? 'Photo model' : engine), yaw: (engines[engine] || {}).yaw || 0, ...extra };
   await db.doc('productModels/' + pid).set({ ...meta, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
   await db.doc('products/' + pid).set({ model3d: meta }, { merge: true }); // the shop reads this to know which chunks to load
   if (prev && prev.ver && prev.ver !== ver) await deleteChunks(db, pid, prev.ver, prev.chunks);
@@ -99,11 +101,39 @@ export async function deleteSkin(db, pid) {
   await db.doc('products/' + pid).update({ skin: firebase.firestore.FieldValue.delete() }).catch(() => {});
 }
 
+// A data URL shrunk to at most max px as WebP (JPEG where WebP can't be made), like the product editor's photos.
+function shrinkUrl(url, max = 900) {
+  return new Promise((res, rej) => {
+    const img = new Image(); img.onerror = rej;
+    img.onload = () => {
+      const s = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      let out = c.toDataURL('image/webp', 0.78); if (!out.startsWith('data:image/webp')) out = c.toDataURL('image/jpeg', 0.8);
+      res(out);
+    };
+    img.src = url;
+  });
+}
+// Fills the empty boxes of the shop's 360° photos (photos already there are kept). pics: { slot: data URL }.
+// Returns the slots filled. All five share one Firestore document (1 MB limit), so stop before it's full.
+async function fill360(db, pid, pics) {
+  const ref = db.doc('productPhotos/' + pid), cur = await ref.get().then(d => d.exists ? d.data() : {}).catch(() => ({})), add = {};
+  let size = Object.values(cur).reduce((a, v) => a + (typeof v === 'string' ? v.length : 0), 0);
+  for (const k of SLOTS360) {
+    if (cur[k] || !pics[k]) continue;
+    const u = await shrinkUrl(pics[k]).catch(() => null); if (!u || size + u.length > 950000) continue;
+    add[k] = u; size += u.length;
+  }
+  if (Object.keys(add).length) await ref.set(add, { merge: true });
+  return Object.keys(add);
+}
+
 // ---------- Tab ----------
 export async function show3d(app, { db, toast, esc }) {
   const products = (await db.collection('products').get()).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.sort || 0) - (b.sort || 0));
   let token = ''; try { token = localStorage.getItem(TOKEN_KEY) || ''; } catch (e) {}
   let serperKey = ''; try { serperKey = localStorage.getItem(SERPER_KEY) || ''; } catch (e) {}
+  let sfToken = ''; try { sfToken = localStorage.getItem(SKETCHFAB_KEY) || ''; } catch (e) {}
   let photo = null, results = {};
   app.innerHTML = `<h1>3D models</h1>
   <div class="list">
@@ -114,16 +144,22 @@ export async function show3d(app, { db, toast, esc }) {
       <div id="m-current" class="muted"></div>
     </div>
     <div class="card list" id="pf">
-      <b>Find photos online and build the 3D model</b>
-      <span class="muted">Searches Google Images for this product, the AI picks the photos, and the 3D model is built by itself. Phones: the best front and back go on the 3D phone. Other shapes: the best product photo goes to the AI engines. You can click another photo afterwards to rebuild.</span>
+      <b>Find the 3D model and photos online</b>
+      <span class="muted">One click does it all. It looks for a real 3D model of this product on Sketchfab and for its photos on Google Images, and the AI picks the right ones. The best 3D model is downloaded and saved (Exploded and X-Ray work on it, with the battery, board and chips inside phones), and the empty 360° photo boxes are filled with the photos and with pictures of the model from each side. No 3D model found? Phones get their photos on the built-in 3D phone; other shapes go to the AI engines. Click another model or photo afterwards to use it instead.</span>
       <div class="row"><input id="pf-q" placeholder="Product name, e.g. itel S25 Ultra" style="max-width:360px"><button class="btn primary" id="pf-go" type="button">Find &amp; Build 3D</button><span class="muted" id="pf-status"></span></div>
-      <details><summary class="muted" style="cursor:pointer">Serper API key (needed once)</summary>
+      <details><summary class="muted" style="cursor:pointer">Sketchfab API token (needed once, for real 3D models)</summary>
+        <div class="row" style="margin-top:8px"><input id="sf-key" type="password" autocomplete="off" placeholder="Sketchfab API token" value="${esc(sfToken)}" style="max-width:360px">
+        <button class="btn" type="button" id="sf-key-save">Save</button></div>
+        <span class="muted">Sign up free at <a href="https://sketchfab.com/signup" target="_blank" rel="noopener">sketchfab.com</a>, then copy the API token from <a href="https://sketchfab.com/settings/password" target="_blank" rel="noopener">Settings → Password &amp; API</a>. It is saved only in this browser, never on the website. Only models whose licence allows use in a shop are used, and the author is credited under the model.</span>
+      </details>
+      <details><summary class="muted" style="cursor:pointer">Serper API key (needed once, for photos)</summary>
         <div class="row" style="margin-top:8px"><input id="pf-key" type="password" autocomplete="off" placeholder="Serper API key" value="${esc(serperKey)}" style="max-width:360px">
         <button class="btn" type="button" id="pf-key-save">Save</button></div>
         <span class="muted">Sign up free at <a href="https://serper.dev" target="_blank" rel="noopener">serper.dev</a> (2,500 free searches) and copy your API key. It is saved only in this browser, never on the website.</span>
       </details>
       <div id="pf-out"></div>
       <span class="muted">Photos belong to whoever took them. Prefer the maker's official site (shown under each photo).</span>
+      <div id="pf-shop"></div>
     </div>
     <div class="card list">
       <b>Phone photos (recommended for phones)</b>
@@ -163,7 +199,7 @@ export async function show3d(app, { db, toast, esc }) {
       return;
     }
     if (!m) { el.innerHTML = 'Current 3D model: <b>none</b>, the shop shows the built-in ' + esc(p ? p.model || 'phone' : '') + ' shape.'; return; }
-    el.innerHTML = `<div class="row">Current 3D model: <b>${esc(m.engineName || m.engine)}</b> · ${mb(m.bytes)} <button class="btn" id="m-cur-view" type="button">Preview</button> <button class="btn danger" id="m-cur-del" type="button">Remove (use built-in shape)</button></div><div id="m-cur-box"></div>`;
+    el.innerHTML = `<div class="row">Current 3D model: <b>${esc(m.engineName || m.engine)}</b>${m.credit ? ' <span class="muted">by ' + esc(m.credit.author) + ' (' + esc(m.credit.licence) + ')</span>' : ''} · ${mb(m.bytes)} <button class="btn" id="m-cur-view" type="button">Preview</button> <button class="btn danger" id="m-cur-del" type="button">Remove (use built-in shape)</button></div><div id="m-cur-box"></div>`;
     $('m-cur-view').onclick = async () => {
       const box = $('m-cur-box'); box.innerHTML = '<div style="height:320px;max-width:520px;margin-top:10px;border:1px solid var(--line);border-radius:12px;position:relative"><p class="muted" style="padding:12px">Loading…</p></div>';
       try { viewer(box.firstChild, await loadModel(db, m, p.id), m.yaw ?? (engines[m.engine] || {}).yaw ?? 0); } catch (e) { box.innerHTML = '<p class="err">' + esc(e.message) + '</p>'; }
@@ -196,42 +232,87 @@ export async function show3d(app, { db, toast, esc }) {
   $('pm-slots').onclick = e => { const k = e.target.dataset.pmClear; if (k) { e.preventDefault(); delete pmPhotos[k]; drawPmSlots(); } };
   // Find photos online: Serper image search -> Gemini picks front/back views -> click one to use it.
   $('pf-key-save').onclick = () => { serperKey = $('pf-key').value.trim(); try { serperKey ? localStorage.setItem(SERPER_KEY, serperKey) : localStorage.removeItem(SERPER_KEY); } catch (e) {} toast(serperKey ? 'Serper key saved in this browser' : 'Serper key removed'); };
-  let pfViews = { front: [], back: [] };
+  $('sf-key-save').onclick = () => { sfToken = $('sf-key').value.trim(); try { sfToken ? localStorage.setItem(SKETCHFAB_KEY, sfToken) : localStorage.removeItem(SKETCHFAB_KEY); } catch (e) {} toast(sfToken ? 'Sketchfab token saved in this browser' : 'Sketchfab token removed'); };
+  let pfViews = { front: [], back: [], side: [], hero: [] }, pfModels = [], pfPid = null;
   const isPhone = () => { const p = products.find(x => x.id === pidSel.value); return !p || !p.model || p.model === 'phone'; };
+  const shopPreview = (p, ver) => { $('pf-shop').innerHTML = `<iframe src="/shop/?product=${encodeURIComponent(p.id)}&v=${ver}" title="Shop preview" style="width:100%;height:640px;border:1px solid var(--line);border-radius:12px;background:#0b0f19;margin-top:8px"></iframe>`; };
   $('pf-go').onclick = async () => {
-    const q = $('pf-q').value.trim(), st = $('pf-status'), out = $('pf-out'), btn = $('pf-go'), phone = isPhone();
+    const q = $('pf-q').value.trim(), st = $('pf-status'), out = $('pf-out'), btn = $('pf-go'), phone = isPhone(), p = products.find(x => x.id === pidSel.value);
     if (!q) { toast('Type the product name'); return; }
-    if (!serperKey) { $('pf').querySelector('details').open = true; toast('Add your Serper API key first'); return; }
-    btn.disabled = true; out.innerHTML = ''; st.textContent = 'Searching…';
+    if (!serperKey && !sfToken) { $('pf').querySelectorAll('details').forEach(d => { d.open = true; }); toast('Add a Sketchfab token or a Serper key first'); return; }
+    btn.disabled = true; out.innerHTML = ''; $('pf-shop').innerHTML = ''; st.textContent = 'Searching…'; pfPid = p.id;
+    pfViews = { front: [], back: [], side: [], hero: [] }; pfModels = [];
+    const msgs = {}, say = (k, m) => { msgs[k] = m; st.textContent = Object.values(msgs).filter(Boolean).join(' · '); };
     try {
-      const results = await searchImages(q + (phone ? ' front and back' : ' product photo'), serperKey);
-      if (!results.length) throw new Error('No photos found. Try a different name.');
-      pfViews = await pickViews(q, results, s => { st.textContent = s; });
+      // Real 3D models and photos are searched and checked at the same time.
+      const [mRes, pRes] = await Promise.allSettled([
+        sfToken ? searchModels(q).then(l => pickModels(q, l, m => say('m', m))) : Promise.resolve(null),
+        serperKey ? searchImages(q + (phone ? ' front and back' : ' product photo'), serperKey).then(r => { if (!r.length) throw new Error('No photos found.'); return pickViews(q, r, m => say('p', m)); }) : Promise.resolve(null)
+      ]);
+      if (mRes.status === 'fulfilled' && mRes.value) pfModels = mRes.value;
+      if (pRes.status === 'fulfilled' && pRes.value) pfViews = pRes.value;
+      const errs = [mRes, pRes].filter(r => r.status === 'rejected').map(r => r.reason.message);
+      st.textContent = '';
+      const tile = (key, img, link, label, title) => `<div class="slot" data-pf="${key}" title="${esc(title)}">
+          <div class="img" ${img ? `style="background-image:url('${esc(img)}')"` : `data-pf-img="${key}"`}>${img ? '' : '<span class="muted" style="font-size:12px">…</span>'}</div>
+          <div class="lbl"><a href="${esc(link)}" target="_blank" rel="noopener" class="muted" style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(label)}</a></div></div>`;
+      const mRow = sfToken ? `<div><b>Real 3D models</b> <span class="muted">(${pfModels.length} found on Sketchfab)</span>
+          ${pfModels.length ? `<div class="photos" style="margin-top:6px">${pfModels.slice(0, 8).map((m, i) => tile('model:' + i, m.thumb, m.url, m.author + ' · ' + mb(m.bytes), m.name + ' by ' + m.author + ' (' + m.licence + ')')).join('')}</div>` : '<p class="muted" style="margin:6px 0 0">None found that match this exact product and may be used in a shop.</p>'}</div>`
+        : '<p class="muted">Add a Sketchfab token (below) to also get real 3D models.</p>';
       const row = (k, label) => {
         const vs = pfViews[k].slice(0, 8);
         return `<div><b>${label}</b> <span class="muted">(${pfViews[k].length} found)</span>
-          ${vs.length ? `<div class="photos" style="margin-top:6px">${vs.map((v, i) => `<div class="slot" data-pf="${k}:${i}" title="Use this photo">
-            <div class="img" data-pf-img="${k}:${i}"><span class="muted" style="font-size:12px">…</span></div>
-            <div class="lbl"><a href="${esc(v.link || v.url)}" target="_blank" rel="noopener" class="muted" style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(v.domain || 'source')}</a></div></div>`).join('')}</div>`
+          ${vs.length ? `<div class="photos" style="margin-top:6px">${vs.map((v, i) => tile(k + ':' + i, '', v.link || v.url, v.domain || 'source', 'Use this photo')).join('')}</div>`
             : '<p class="muted" style="margin:6px 0 0">None found. Try another search or upload a photo.</p>'}</div>`;
       };
-      const keys = phone ? ['back', 'front'] : ['hero'];
-      out.innerHTML = phone ? row('back', 'Back') + row('front', 'Front') : row('hero', 'Product photo');
+      const keys = !serperKey ? [] : phone ? ['back', 'front'] : ['hero'];
+      out.innerHTML = mRow + (errs.length ? errs.map(e => `<p class="err">${esc(e)}</p>`).join('') : '') + keys.map(k => row(k, { back: 'Back', front: 'Front', hero: 'Product photo' }[k])).join('');
       for (const k of keys) pfViews[k].slice(0, 8).forEach((v, i) => cropView(v, 360)
         .then(u => { const el = out.querySelector(`[data-pf-img="${k}:${i}"]`); if (el) { el.style.backgroundImage = `url('${u}')`; el.innerHTML = ''; } })
         .catch(() => { const el = out.querySelector(`[data-pf="${k}:${i}"]`); if (el) el.remove(); }));
-      // Carry on by itself with the AI's best picks.
-      if (phone && pfViews.front.length && pfViews.back.length) { await pick('back', 0); await pick('front', 0); st.textContent = 'Building with the AI\'s best front and back…'; await build3dPhone(); st.textContent = 'Done. Click another photo to rebuild.'; }
+      // Carry on by itself: a real 3D model first (try the next one if a download fails), else the photos.
+      let used = false;
+      for (let i = 0; i < Math.min(3, pfModels.length) && !used; i++) {
+        try { await useModel(i); used = true; } catch (err) { console.warn(err); say('m', 'Model ' + (i + 1) + ' could not be used (' + err.message + ')'); }
+      }
+      if (used) { st.textContent = 'Done: real 3D model saved. Click another model to use it instead, or a photo to put photos on the built-in phone.'; }
+      else if (phone && pfViews.front.length && pfViews.back.length) { await pick('back', 0); await pick('front', 0); st.textContent = 'Building with the AI\'s best front and back…'; await build3dPhone(); await photos360(); st.textContent = 'Done. Click another photo to rebuild.'; }
       else if (phone) {
         // Fill the side that was found, so only the missing one needs uploading (that upload then builds by itself).
         if (pfViews.front.length) await pick('front', 0); else if (pfViews.back.length) await pick('back', 0);
+        await photos360();
         st.textContent = 'Found ' + (pfViews.front.length ? 'a front but no clean back' : pfViews.back.length ? 'a back but no clean front' : 'no clean front or back') + '. Upload the missing one in Phone photos below (it builds as soon as both are in), or search again.';
       }
-      else if (pfViews.hero.length) { await pick('hero', 0); st.textContent = 'AI engines are making the 3D model below (30 s to 3 min)…'; }
-      else st.textContent = 'No clean product photo found. Search again or upload one below.';
-    } catch (err) { st.textContent = ''; out.innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+      else if (pfViews.hero.length) { await photos360(); await pick('hero', 0); st.textContent = 'AI engines are making the 3D model below (30 s to 3 min)…'; }
+      else st.textContent = serperKey ? 'No clean product photo found. Search again or upload one below.' : 'No 3D model found. Add a Serper key to use photos instead.';
+    } catch (err) { st.textContent = ''; out.insertAdjacentHTML('beforeend', `<p class="err">${esc(err.message)}</p>`); }
     btn.disabled = false;
   };
+  // The best found photos (cropped) for the 360° photos tab: front, back, and a side view as the right side.
+  async function photoPics() {
+    const pics = {};
+    for (const [slot, k] of [['front', 'front'], ['back', 'back'], ['right', 'side']]) { const v = pfViews[k] && pfViews[k][0]; if (v) pics[slot] = await cropView(v, 1000).catch(() => null); }
+    return pics;
+  }
+  async function photos360(shots) {
+    const p = products.find(x => x.id === pfPid); if (!p) return [];
+    const filled = await fill360(db, p.id, { ...(shots || {}), ...await photoPics() });
+    if (filled.length) toast('360° photos added: ' + filled.join(', '));
+    return filled;
+  }
+  // Downloads a found 3D model, stands it up, saves it on the product, fills the 360° photos and shows the shop page.
+  async function useModel(i) {
+    const m = pfModels[i], p = products.find(x => x.id === pfPid), st = $('pf-status'); if (!m || !p) return;
+    $('pf-out').querySelectorAll('[data-pf^="model:"]').forEach(el => { el.style.outline = el.dataset.pf === 'model:' + i ? '2px solid var(--accent, #10b981)' : ''; });
+    const say = t => { st.textContent = t; };
+    const buf = await downloadModel(m, sfToken, say);
+    const ready = await prepareModel(buf, { phone: !p.model || p.model === 'phone', onStatus: say });
+    say('Saving on ' + p.name + '…');
+    p.model3d = await saveModel(db, p.id, 'sketchfab', ready.blob, { engineName: 'Sketchfab: ' + m.name, credit: { name: m.name, author: m.author, licence: m.licence, url: m.url } });
+    const filled = await photos360(ready.shots);
+    showCurrent(); shopPreview(p, p.model3d.ver);
+    toast('3D model saved for ' + p.name + (filled.length ? ' · 360° photos: ' + filled.join(', ') : ''));
+  }
   // Uses one candidate: phones -> Front/Back box (and builds once both are set); other shapes -> AI photo + engines.
   const pick = async (k, i) => {
     const v = pfViews[k][i]; if (!v) return;
@@ -245,6 +326,7 @@ export async function show3d(app, { db, toast, esc }) {
   $('pf-out').onclick = async e => {
     const tile = e.target.closest('[data-pf]'); if (!tile || e.target.closest('a')) return;
     const [k, i] = tile.dataset.pf.split(':');
+    if (k === 'model') { try { await useModel(Number(i)); $('pf-status').textContent = 'Done: this 3D model is saved.'; } catch (err) { $('pf-status').textContent = 'Could not use that model: ' + err.message; } return; }
     try { await pick(k, Number(i)); if (k !== 'hero') autoBuild(); } catch (err) { $('pf-status').textContent = 'Could not get that photo. Try another one.'; }
   };
 
