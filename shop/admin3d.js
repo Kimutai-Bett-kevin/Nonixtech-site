@@ -7,8 +7,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generate, engines } from './g3d.js';
 import { makeSkin } from './photo3d.js';
+import { searchImages, pickViews, cropView } from './findphotos.js';
 
-const CHUNK = 900 * 1024, MAX_BYTES = 15 * 1024 * 1024, TOKEN_KEY = 'nonixHfToken';
+const CHUNK = 900 * 1024, MAX_BYTES = 15 * 1024 * 1024, TOKEN_KEY = 'nonixHfToken', SERPER_KEY = 'nonixSerperKey';
 const mb = n => (n / 1048576).toFixed(1) + ' MB';
 const pad = i => String(i).padStart(3, '0');
 
@@ -102,6 +103,7 @@ export async function deleteSkin(db, pid) {
 export async function show3d(app, { db, toast, esc }) {
   const products = (await db.collection('products').get()).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.sort || 0) - (b.sort || 0));
   let token = ''; try { token = localStorage.getItem(TOKEN_KEY) || ''; } catch (e) {}
+  let serperKey = ''; try { serperKey = localStorage.getItem(SERPER_KEY) || ''; } catch (e) {}
   let photo = null, results = {};
   app.innerHTML = `<h1>3D models</h1>
   <div class="list">
@@ -115,6 +117,18 @@ export async function show3d(app, { db, toast, esc }) {
       <b>Phone photos (recommended for phones)</b>
       <span class="muted">Puts this phone's real photos on the shop's built-in 3D phone: the front photo becomes the screen and the back photo the back cover. It always looks like a phone, and Exploded and X-Ray still show the battery, board, chips and camera with your spec labels. It starts with this product's 360° photos; click a box to use a different photo. Use photos of the whole phone, straight on, on a plain background.</span>
       <div class="photos" id="pm-slots" style="max-width:300px"></div>
+      <details id="pf"><summary style="cursor:pointer"><b>Find photos online</b> <span class="muted">· search Google Images and let the AI pick the front and back</span></summary>
+        <div class="list" style="margin-top:10px">
+          <div class="row"><input id="pf-q" placeholder="Phone name, e.g. itel S25 Ultra" style="max-width:360px"><button class="btn" id="pf-go" type="button">Search</button><span class="muted" id="pf-status"></span></div>
+          <details><summary class="muted" style="cursor:pointer">Serper API key (needed once)</summary>
+            <div class="row" style="margin-top:8px"><input id="pf-key" type="password" autocomplete="off" placeholder="Serper API key" value="${esc(serperKey)}" style="max-width:360px">
+            <button class="btn" type="button" id="pf-key-save">Save</button></div>
+            <span class="muted">Sign up free at <a href="https://serper.dev" target="_blank" rel="noopener">serper.dev</a> (2,500 free searches) and copy your API key. It is saved only in this browser, never on the website.</span>
+          </details>
+          <div id="pf-out"></div>
+          <span class="muted">Photos belong to whoever took them. Prefer the maker's official site (shown under each photo).</span>
+        </div>
+      </details>
       <div class="row"><button class="btn primary" id="pm-go" type="button">Prepare Photos</button><span class="muted" id="pm-note"></span></div>
       <div id="pm-out"></div>
     </div>
@@ -165,7 +179,8 @@ export async function show3d(app, { db, toast, esc }) {
       <div class="lbl"><span>${l}</span>${pmPhotos[k] ? `<button type="button" data-pm-clear="${k}">Remove</button>` : ''}</div></label>`).join('');
   };
   async function loadPmPhotos() {
-    $('pm-out').innerHTML = ''; $('pm-note').textContent = '';
+    $('pm-out').innerHTML = ''; $('pm-note').textContent = ''; $('pf-out').innerHTML = ''; $('pf-status').textContent = '';
+    $('pf-q').value = (products.find(x => x.id === pidSel.value) || {}).name || '';
     const ph = await db.doc('productPhotos/' + pidSel.value).get().then(d => d.exists ? d.data() : {}).catch(() => ({}));
     pmPhotos = {}; PM_SLOTS.forEach(([k]) => { if (typeof ph[k] === 'string') pmPhotos[k] = ph[k]; });
     drawPmSlots();
@@ -176,6 +191,42 @@ export async function show3d(app, { db, toast, esc }) {
     pmPhotos[k] = URL.createObjectURL(f); drawPmSlots();
   };
   $('pm-slots').onclick = e => { const k = e.target.dataset.pmClear; if (k) { e.preventDefault(); delete pmPhotos[k]; drawPmSlots(); } };
+  // Find photos online: Serper image search -> Gemini picks front/back views -> click one to use it.
+  $('pf-key-save').onclick = () => { serperKey = $('pf-key').value.trim(); try { serperKey ? localStorage.setItem(SERPER_KEY, serperKey) : localStorage.removeItem(SERPER_KEY); } catch (e) {} toast(serperKey ? 'Serper key saved in this browser' : 'Serper key removed'); };
+  let pfViews = { front: [], back: [] };
+  $('pf-go').onclick = async () => {
+    const q = $('pf-q').value.trim(), st = $('pf-status'), out = $('pf-out'), btn = $('pf-go');
+    if (!q) { toast('Type the phone name'); return; }
+    if (!serperKey) { $('pf').querySelector('details').open = true; toast('Add your Serper API key first'); return; }
+    btn.disabled = true; out.innerHTML = ''; st.textContent = 'Searching…';
+    try {
+      const results = await searchImages(q + ' front and back', serperKey);
+      if (!results.length) throw new Error('No photos found. Try a different name.');
+      pfViews = await pickViews(q, results, s => { st.textContent = s; });
+      st.textContent = pfViews.front.length || pfViews.back.length ? 'Click a photo to use it.' : '';
+      const row = (k, label) => {
+        const vs = pfViews[k].slice(0, 8);
+        return `<div><b>${label}</b> <span class="muted">(${pfViews[k].length} found)</span>
+          ${vs.length ? `<div class="photos" style="margin-top:6px">${vs.map((v, i) => `<div class="slot" data-pf="${k}:${i}" title="Use this as the ${k}">
+            <div class="img" data-pf-img="${k}:${i}"><span class="muted" style="font-size:12px">…</span></div>
+            <div class="lbl"><a href="${esc(v.link || v.url)}" target="_blank" rel="noopener" class="muted" style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(v.domain || 'source')}</a></div></div>`).join('')}</div>`
+            : '<p class="muted" style="margin:6px 0 0">None found. Try another search or upload a photo.</p>'}</div>`;
+      };
+      out.innerHTML = row('back', 'Back') + row('front', 'Front');
+      for (const k of ['back', 'front']) pfViews[k].slice(0, 8).forEach((v, i) => cropView(v, 360)
+        .then(u => { const el = out.querySelector(`[data-pf-img="${k}:${i}"]`); if (el) { el.style.backgroundImage = `url('${u}')`; el.innerHTML = ''; } })
+        .catch(() => { const el = out.querySelector(`[data-pf="${k}:${i}"]`); if (el) el.remove(); }));
+    } catch (err) { st.textContent = ''; out.innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+    btn.disabled = false;
+  };
+  $('pf-out').onclick = async e => {
+    const tile = e.target.closest('[data-pf]'); if (!tile || e.target.closest('a')) return;
+    const [k, i] = tile.dataset.pf.split(':'), v = pfViews[k][Number(i)]; if (!v) return;
+    $('pf-status').textContent = 'Getting the full-size photo…';
+    try { pmPhotos[k] = await cropView(v); drawPmSlots(); $('pf-status').textContent = (k === 'front' ? 'Front' : 'Back') + ' set. Click Prepare Photos when both are set.'; }
+    catch (err) { $('pf-status').textContent = 'Could not get that photo. Try another one.'; }
+  };
+
   $('pm-go').onclick = async () => {
     const p = products.find(x => x.id === pidSel.value), btn = $('pm-go'), note = $('pm-note');
     if (p.model && p.model !== 'phone') { $('pm-out').innerHTML = `<p class="err">${esc(p.name)}'s 3D model shape is not "Phone". Change it under Products first.</p>`; return; }

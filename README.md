@@ -56,6 +56,15 @@ board, chips, battery and camera with the spec labels. Saving photos removes
 any AI model from the product (an AI model would be shown instead).
 `/shop/?product=<id>` opens a product directly.
 
+Find photos online (`shop/findphotos.js`, inside the Phone photos card):
+searches Google Images through [Serper](https://serper.dev) (free key, saved
+only in the admin's browser), drops results named as a different variant
+(Pro Max, Ultra, Plus…), and has Gemini (Firebase AI Logic, same quota as
+Noni) mark straight-on front and back views of the exact phone in up to 24
+results. Views where one phone covers another go to the bottom. Clicking a
+candidate crops it into the Front/Back box. Images are fetched through the
+public `wsrv.nl` proxy, because other sites don't let browsers read them.
+
 Payments are manual: customers see the till/paybill number from
 `settings/shop` and the admin marks orders paid after checking M-Pesa.
 
