@@ -33,6 +33,22 @@ function trim(img) {
     for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w])
       if (j >= 0 && j < w * h && !mask[j] && like(j)) { mask[j] = 1; stack.push(j); }
   }
+  // The phone is the largest connected non-background area. Anything separate (a side view next to it,
+  // text, a second phone) becomes background.
+  const comp = new Int32Array(w * h).fill(-1); let best = -1, bestSize = 0, id = 0;
+  for (let s0 = 0; s0 < w * h; s0++) {
+    if (mask[s0] || comp[s0] >= 0) continue;
+    let size = 0; comp[s0] = id; stack.push(s0);
+    while (stack.length) {
+      const i = stack.pop(), x = i % w; size++;
+      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w])
+        if (j >= 0 && j < w * h && !mask[j] && comp[j] < 0) { comp[j] = id; stack.push(j); }
+    }
+    if (size > bestSize) { bestSize = size; best = id; }
+    id++;
+  }
+  if (best < 0) throw new Error('Could not find the phone in a photo. Use a plain background.');
+  for (let i = 0; i < w * h; i++) if (comp[i] !== best) mask[i] = 1;
   // Bounds of the phone: rows/columns that are at least 1% phone, so specks and faint shadows don't widen it.
   const rows = new Array(h).fill(0), cols = new Array(w).fill(0);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (!mask[y * w + x]) { rows[y]++; cols[x]++; }

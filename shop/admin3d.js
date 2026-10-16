@@ -129,9 +129,11 @@ export async function show3d(app, { db, toast, esc }) {
           <span class="muted">Photos belong to whoever took them. Prefer the maker's official site (shown under each photo).</span>
         </div>
       </details>
-      <div class="row"><button class="btn primary" id="pm-go" type="button">Prepare Photos</button><span class="muted" id="pm-note"></span></div>
+      <div class="row"><button class="btn primary" id="pm-go" type="button">Build 3D Phone</button><span class="muted" id="pm-note">Runs by itself once a front and a back are picked.</span></div>
       <div id="pm-out"></div>
     </div>
+    <details id="ai-card"><summary style="cursor:pointer;margin:4px 0 10px"><b>Other shapes (laptops, mini PCs…): AI model from one photo</b> <span class="muted">· not for phones</span></summary>
+    <div class="list">
     <div class="card list">
       <b>AI model from one photo: other shapes</b>
       <label style="max-width:220px">Photo angle<select id="m-angle"><option>Front</option><option>Back</option><option>Side</option></select></label>
@@ -146,6 +148,7 @@ export async function show3d(app, { db, toast, esc }) {
       <div class="row"><button class="btn primary" id="m-go" disabled>Generate 3D Assets (All 3 Engines)</button><span class="muted" id="m-go-note">Choose a photo first.</span></div>
     </div>
     <div class="grid" id="m-cards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
+    </div></details>
   </div>`;
   const $ = id => document.getElementById(id), pidSel = $('m-pid');
 
@@ -188,7 +191,7 @@ export async function show3d(app, { db, toast, esc }) {
   $('pm-slots').onchange = e => {
     const k = e.target.dataset.pm, f = e.target.files[0]; if (!k || !f) return;
     if (!/^image\//.test(f.type)) { toast('Please choose an image file'); return; }
-    pmPhotos[k] = URL.createObjectURL(f); drawPmSlots();
+    pmPhotos[k] = URL.createObjectURL(f); drawPmSlots(); autoBuild();
   };
   $('pm-slots').onclick = e => { const k = e.target.dataset.pmClear; if (k) { e.preventDefault(); delete pmPhotos[k]; drawPmSlots(); } };
   // Find photos online: Serper image search -> Gemini picks front/back views -> click one to use it.
@@ -203,7 +206,7 @@ export async function show3d(app, { db, toast, esc }) {
       const results = await searchImages(q + ' front and back', serperKey);
       if (!results.length) throw new Error('No photos found. Try a different name.');
       pfViews = await pickViews(q, results, s => { st.textContent = s; });
-      st.textContent = pfViews.front.length || pfViews.back.length ? 'Click a photo to use it.' : '';
+      st.textContent = pfViews.front.length || pfViews.back.length ? 'Pick a back and a front, or use the AI\'s best picks.' : '';
       const row = (k, label) => {
         const vs = pfViews[k].slice(0, 8);
         return `<div><b>${label}</b> <span class="muted">(${pfViews[k].length} found)</span>
@@ -212,47 +215,62 @@ export async function show3d(app, { db, toast, esc }) {
             <div class="lbl"><a href="${esc(v.link || v.url)}" target="_blank" rel="noopener" class="muted" style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(v.domain || 'source')}</a></div></div>`).join('')}</div>`
             : '<p class="muted" style="margin:6px 0 0">None found. Try another search or upload a photo.</p>'}</div>`;
       };
-      out.innerHTML = row('back', 'Back') + row('front', 'Front');
+      out.innerHTML = (pfViews.front.length && pfViews.back.length ? '<div class="row"><button class="btn primary" id="pf-best" type="button">Use AI\'s best picks and build</button></div>' : '')
+        + row('back', 'Back') + row('front', 'Front');
       for (const k of ['back', 'front']) pfViews[k].slice(0, 8).forEach((v, i) => cropView(v, 360)
         .then(u => { const el = out.querySelector(`[data-pf-img="${k}:${i}"]`); if (el) { el.style.backgroundImage = `url('${u}')`; el.innerHTML = ''; } })
         .catch(() => { const el = out.querySelector(`[data-pf="${k}:${i}"]`); if (el) el.remove(); }));
     } catch (err) { st.textContent = ''; out.innerHTML = `<p class="err">${esc(err.message)}</p>`; }
     btn.disabled = false;
   };
+  const pick = async (k, i) => {
+    const v = pfViews[k][i]; if (!v) return;
+    $('pf-status').textContent = 'Getting the full-size ' + k + ' photo…';
+    pmPhotos[k] = await cropView(v); drawPmSlots();
+    $('pf-out').querySelectorAll(`[data-pf^="${k}:"]`).forEach(el => { el.style.outline = el.dataset.pf === k + ':' + i ? '2px solid var(--accent, #10b981)' : ''; });
+    $('pf-status').textContent = (k === 'front' ? 'Front' : 'Back') + ' set.' + (pmPhotos.front && pmPhotos.back ? '' : ' Now pick the ' + (k === 'front' ? 'back' : 'front') + '.');
+  };
   $('pf-out').onclick = async e => {
+    if (e.target.id === 'pf-best') {
+      try { await pick('back', 0); await pick('front', 0); autoBuild(); } catch (err) { $('pf-status').textContent = 'Could not get those photos. Pick others.'; }
+      return;
+    }
     const tile = e.target.closest('[data-pf]'); if (!tile || e.target.closest('a')) return;
-    const [k, i] = tile.dataset.pf.split(':'), v = pfViews[k][Number(i)]; if (!v) return;
-    $('pf-status').textContent = 'Getting the full-size photo…';
-    try { pmPhotos[k] = await cropView(v); drawPmSlots(); $('pf-status').textContent = (k === 'front' ? 'Front' : 'Back') + ' set. Click Prepare Photos when both are set.'; }
-    catch (err) { $('pf-status').textContent = 'Could not get that photo. Try another one.'; }
+    const [k, i] = tile.dataset.pf.split(':');
+    try { await pick(k, Number(i)); autoBuild(); } catch (err) { $('pf-status').textContent = 'Could not get that photo. Try another one.'; }
   };
 
-  $('pm-go').onclick = async () => {
-    const p = products.find(x => x.id === pidSel.value), btn = $('pm-go'), note = $('pm-note');
-    if (p.model && p.model !== 'phone') { $('pm-out').innerHTML = `<p class="err">${esc(p.name)}'s 3D model shape is not "Phone". Change it under Products first.</p>`; return; }
-    btn.disabled = true; note.textContent = 'Preparing…';
+  // Front + back -> cut out -> save on the product -> show the finished 3D phone from the shop. No extra clicks.
+  let building = false;
+  function autoBuild() { if (pmPhotos.front && pmPhotos.back) build3dPhone(); }
+  async function build3dPhone() {
+    if (building) return;
+    const p = products.find(x => x.id === pidSel.value), btn = $('pm-go'), note = $('pm-note'), out = $('pm-out');
+    if (p.model && p.model !== 'phone') { out.innerHTML = `<p class="err">${esc(p.name)}'s 3D model shape is not "Phone". Change it under Products first.</p>`; return; }
+    if (!pmPhotos.front || !pmPhotos.back) { out.innerHTML = '<p class="err">Add a front and a back photo first.</p>'; return; }
+    building = true; btn.disabled = true; out.innerHTML = '';
     try {
+      note.textContent = '1/3 Cutting the phone out of the photos…';
       const skin = await makeSkin(pmPhotos);
-      note.textContent = '';
-      $('pm-out').innerHTML = `<span class="muted">Check the phone is cut out cleanly, with no background or shadow left around it:</span>
-        <div class="row" style="align-items:flex-end;margin:8px 0"><figure style="margin:0"><img src="${skin.front}" style="height:220px;border-radius:10px;border:1px solid var(--line)"><figcaption class="muted">Screen</figcaption></figure>
-        <figure style="margin:0"><img src="${skin.back}" style="height:220px;border-radius:10px;border:1px solid var(--line)"><figcaption class="muted">Back cover</figcaption></figure>
-        <span class="muted">Frame colour <span style="display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:middle;background:${skin.colour}"></span> ${skin.colour}</span></div>
-        <div class="row"><button class="btn primary" id="pm-use" type="button">Use on ${esc(p.name)}</button><span class="muted">Replaces any AI model on this product.</span></div>`;
-      $('pm-use').onclick = async () => {
-        const b = $('pm-use'); b.disabled = true; b.textContent = 'Saving…';
-        try {
-          p.skin = await saveSkin(db, p.id, skin);
-          if (p.model3d) { await deleteModel(db, p.id); delete p.model3d; }
-          toast('Photos saved on the 3D phone for ' + p.name); showCurrent(); $('pm-out').innerHTML = '';
-        } catch (err) { toast('Could not save: ' + err.message); b.disabled = false; b.textContent = 'Use on ' + p.name; }
-      };
-    } catch (err) { note.textContent = ''; $('pm-out').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
-    btn.disabled = false;
-  };
+      note.textContent = '2/3 Saving on ' + p.name + '…';
+      p.skin = await saveSkin(db, p.id, skin);
+      if (p.model3d) { await deleteModel(db, p.id); delete p.model3d; }
+      note.textContent = '3/3 Done. This is the shop page (drag to turn it, try Exploded and X-Ray):';
+      showCurrent();
+      out.innerHTML = `<div class="row" style="align-items:flex-end;margin:4px 0 8px">
+          <figure style="margin:0"><img src="${skin.back}" style="height:120px;border-radius:8px;border:1px solid var(--line)"><figcaption class="muted">Back cover</figcaption></figure>
+          <figure style="margin:0"><img src="${skin.front}" style="height:120px;border-radius:8px;border:1px solid var(--line)"><figcaption class="muted">Screen</figcaption></figure>
+          <span class="muted">Wrong photo or background left around the phone? Pick or upload another and it rebuilds.</span></div>
+        <iframe src="/shop/?product=${encodeURIComponent(p.id)}&v=${p.skin.ver}" title="Shop preview" style="width:100%;height:640px;border:1px solid var(--line);border-radius:12px;background:#0b0f19"></iframe>`;
+      toast('3D phone ready for ' + p.name);
+    } catch (err) { note.textContent = ''; out.innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+    building = false; btn.disabled = false;
+  }
+  $('pm-go').onclick = build3dPhone;
 
-  pidSel.onchange = () => { showCurrent(); renderCards(); loadPmPhotos(); };
-  showCurrent(); loadPmPhotos();
+  const openAi = () => { const p = products.find(x => x.id === pidSel.value); $('ai-card').open = !!(p && p.model && p.model !== 'phone'); };
+  pidSel.onchange = () => { showCurrent(); renderCards(); loadPmPhotos(); openAi(); };
+  showCurrent(); loadPmPhotos(); openAi();
 
   $('m-file').onchange = e => {
     const f = e.target.files[0]; if (!f) return;
