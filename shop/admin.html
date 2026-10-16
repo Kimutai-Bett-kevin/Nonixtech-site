@@ -189,6 +189,10 @@ async function editProduct(p) {
   const pending = { ...photos };
   app.innerHTML = `<div class="row" style="margin-bottom:16px"><button class="btn" id="pback">← Products</button><h1 style="margin:0">${isNew ? 'New product' : esc(p.name)}</h1></div>
   <form id="pf" class="list">
+    <div class="card list">
+      <div class="row"><b class="grow">Fill the details with AI</b><button class="btn" type="button" id="pai">Fill with AI</button></div>
+      <span class="muted" id="pai-note">Type the exact name (e.g. "Tecno Camon 40 Pro" or "Samsung Galaxy A56 5G") and the price, then click Fill with AI: it fills the category, 3D shape, spec line, description, spec sheet, ad lines and the part names in the exploded 3D view. AI can get specs wrong, so check them before saving. Then use Find &amp; Build 3D in the 3D models tab.</span>
+    </div>
     <div class="card grid">
       <label>Name<input name="name" required maxlength="80" value="${esc(p.name)}"></label>
       <label>Category<input name="type" required maxlength="40" value="${esc(p.type)}" placeholder="Smartphone, Laptop, Mini PC…"></label>
@@ -210,6 +214,32 @@ async function editProduct(p) {
     <div class="row"><button class="btn primary" type="submit" id="psave">Save product</button><span class="grow"></span>${isNew ? '' : '<button class="btn danger" type="button" id="pdel">Delete product</button>'}</div>
   </form>`;
   document.getElementById('pback').onclick = () => show('products');
+  let aiLabels = null; // part names for the exploded view, from Fill with AI (saved with the product)
+  document.getElementById('pai').onclick = async () => {
+    const f = document.getElementById('pf'), name = f.elements.name.value.trim(), btn = document.getElementById('pai'), note = document.getElementById('pai-note');
+    if (!name) { toast('Type the product name first'); f.elements.name.focus(); return; }
+    btn.disabled = true; btn.textContent = 'Filling…';
+    try {
+      const { askJson } = await import('/shop/findphotos.js');
+      const d = await askJson([{ text: `You write product listings for Nonix Shop, an electronics shop in Kenya. Give the real, official specifications of "${name}" (if several versions exist, the most common one sold in Kenya). Reply with only JSON:
+{"type": "Smartphone" | "Laptop" | "Mini PC" | "Tablet" | other short category,
+ "model": "phone" for phones and tablets, "laptop" for laptops, "minipc" for desktops, mini PCs and other boxes,
+ "keySpec": "short spec line under 60 characters, e.g. Dimensity 7300 · 8GB RAM · 256GB",
+ "blurb": "one or two selling sentences under 300 characters, plain and factual",
+ "rows": [{"k": "Display", "v": "..."}, {"k": "Chip", "v": "..."}, {"k": "Memory", "v": "8 GB RAM · 256 GB"}, {"k": "Camera", "v": "..."}, {"k": "Battery", "v": "..."}, {"k": "Network", "v": "..."}] (5 to 7 rows; for laptops use Display, CPU, Memory, Battery, Weight, Ports),
+ "specs": ["three ad lines", "each under 24 characters", "..."],
+ "labels": short part names with the spec, under 22 characters each. Phones: {"display": "6.7\" AMOLED", "soc": "Dimensity 7300", "ram": "8 GB RAM", "storage": "256 GB storage", "battery": "5000 mAh battery", "camera": "50 MP camera", "back": "Glass back", "board": "Logic board"}. Laptops: {"display", "cpu", "ram", "ssd", "battery", "fan", "deck", "bottom", "board"}. Boxes: {"top", "board", "cpu", "ram", "ssd", "wifi"}.}
+Use only specs you are sure of; leave out what you are not sure of.` }], s => { note.textContent = s; });
+      const set = (k, v) => { if (v != null && f.elements[k]) f.elements[k].value = String(v).slice(0, Number(f.elements[k].maxLength) > 0 ? f.elements[k].maxLength : 2000); };
+      set('type', d.type); if (['phone', 'laptop', 'minipc'].includes(d.model)) f.elements.model.value = d.model;
+      set('keySpec', d.keySpec); set('blurb', d.blurb);
+      if (Array.isArray(d.rows)) set('rows', d.rows.filter(r => r && r.k && r.v).map(r => r.k + ': ' + r.v).join('\n'));
+      (Array.isArray(d.specs) ? d.specs : []).slice(0, 3).forEach((v, i) => set('spec' + i, v));
+      if (d.labels && typeof d.labels === 'object') aiLabels = Object.fromEntries(Object.entries(d.labels).filter(([k, v]) => typeof v === 'string' && v).map(([k, v]) => [k, v.slice(0, 30)]));
+      note.textContent = 'Filled by AI. Check every spec against the maker\'s website, set the price, then save.';
+    } catch (err) { note.textContent = 'Could not fill: ' + err.message; }
+    btn.disabled = false; btn.textContent = 'Fill with AI';
+  };
   const drawSlots = () => {
     document.getElementById('slots').innerHTML = PHOTO_SLOTS.map(([k, l]) => `<label class="slot"><input type="file" accept="image/*" data-slot="${k}" hidden>
       <div class="img" style="${pending[k] ? `background-image:url('${pending[k]}')` : ''}">${pending[k] ? '' : '+'}</div>
@@ -221,7 +251,7 @@ async function editProduct(p) {
   slots.onclick = e => { const k = e.target.dataset.clear; if (k) { e.preventDefault(); delete pending[k]; drawSlots(); } };
   if (!isNew) document.getElementById('pdel').onclick = async () => {
     if (!confirm('Delete ' + p.name + '? This cannot be undone.')) return;
-    const a3 = await import('/shop/admin3d.js'); await a3.deleteModel(db, p.id); await a3.deleteSkin(db, p.id); await db.doc('products/' + p.id).delete(); await db.doc('productPhotos/' + p.id).delete(); toast('Deleted'); show('products');
+    const a3 = await import('/shop/admin3d.js'); await a3.deleteModel(db, p.id); await a3.deleteSkin(db, p.id); await a3.deleteParts(db, p.id); await db.doc('products/' + p.id).delete(); await db.doc('productPhotos/' + p.id).delete(); toast('Deleted'); show('products');
   };
   document.getElementById('pf').onsubmit = async e => {
     e.preventDefault(); const f = e.target, btn = document.getElementById('psave');
@@ -229,6 +259,7 @@ async function editProduct(p) {
     const data = { name: f.elements.name.value.trim(), type: f.elements.type.value.trim(), price: Math.round(Number(f.elements.price.value)), model: f.elements.model.value, accent: f.elements.accent.value, sort: Number(f.elements.sort.value) || 0,
       active: f.elements.active.checked, keySpec: f.elements.keySpec.value.trim(), blurb: f.elements.blurb.value.trim(), rows, specs: [0, 1, 2].map(i => f.elements['spec' + i].value.trim()).filter(Boolean),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+    if (aiLabels) data.labels = aiLabels;
     if (!data.name || !(data.price > 0)) { document.getElementById('perr').textContent = 'Name and a price above 0 are required.'; return; }
     const id = isNew ? (data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'product') + '-' + Math.random().toString(36).slice(2, 6) : p.id;
     const size = Object.values(pending).reduce((a, v) => a + v.length, 0);

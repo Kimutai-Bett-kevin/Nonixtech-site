@@ -9,6 +9,7 @@ import { generate, engines } from './g3d.js';
 import { makeSkin } from './photo3d.js';
 import { searchImages, pickViews, cropView } from './findphotos.js';
 import { searchModels, pickModels, downloadModel, prepareModel } from './findmodel.js';
+import { findParts, partPhoto } from './findparts.js';
 
 const CHUNK = 900 * 1024, MAX_BYTES = 15 * 1024 * 1024, TOKEN_KEY = 'nonixHfToken', SERPER_KEY = 'nonixSerperKey', SKETCHFAB_KEY = 'nonixSketchfabToken';
 const SLOTS360 = ['front', 'right', 'back', 'left', 'top']; // the shop's 360° photos (productPhotos/{pid})
@@ -96,6 +97,18 @@ export async function saveSkin(db, pid, skin) {
   await db.doc('products/' + pid).set({ skin: meta }, { merge: true });
   return meta;
 }
+// Real spare-part photos (battery, board, camera…): JPEG data URLs in productParts/{pid}; products/{pid}.parts tells
+// the shop which version to load. pics: { key: { url, aspect } }.
+export async function saveParts(db, pid, pics) {
+  const meta = { ver: Date.now().toString(36), keys: Object.keys(pics) };
+  await db.doc('productParts/' + pid).set({ ver: meta.ver, ...Object.fromEntries(Object.entries(pics).map(([k, v]) => [k, v])), updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+  await db.doc('products/' + pid).set({ parts: meta }, { merge: true });
+  return meta;
+}
+export async function deleteParts(db, pid) {
+  await db.doc('productParts/' + pid).delete().catch(() => {});
+  await db.doc('products/' + pid).update({ parts: firebase.firestore.FieldValue.delete() }).catch(() => {});
+}
 export async function deleteSkin(db, pid) {
   await db.doc('productSkins/' + pid).delete().catch(() => {});
   await db.doc('products/' + pid).update({ skin: firebase.firestore.FieldValue.delete() }).catch(() => {});
@@ -145,8 +158,8 @@ export async function show3d(app, { db, toast, esc }) {
     </div>
     <div class="card list" id="pf">
       <b>Find the 3D model and photos online</b>
-      <span class="muted">One click does it all. It looks for a real 3D model of this product on Sketchfab and for its photos on Google Images, and the AI picks the right ones. The best 3D model is downloaded and saved (Exploded and X-Ray work on it, with the board, chips and battery shown inside phones, laptops and mini PCs; tap a part for its details), and the empty 360° photo boxes are filled with the photos and with pictures of the model from each side. No 3D model found? Phones get their photos on the built-in 3D phone; other shapes go to the AI engines. Click another model or photo afterwards to use it instead.</span>
-      <div class="row"><input id="pf-q" placeholder="Product name, e.g. itel S25 Ultra" style="max-width:360px"><button class="btn primary" id="pf-go" type="button">Find &amp; Build 3D</button><span class="muted" id="pf-status"></span></div>
+      <span class="muted">One click does it all, and it also finds real photos of the spare parts (battery, board, camera, chip…), which go on those parts in the shop's exploded view. It looks for a real 3D model of this product on Sketchfab and for its photos on Google Images, and the AI picks the right ones. The best 3D model is downloaded and saved (Exploded and X-Ray work on it, with the board, chips and battery shown inside phones, laptops and mini PCs; tap a part for its details), and the empty 360° photo boxes are filled with the photos and with pictures of the model from each side. No 3D model found? Phones get their photos on the built-in 3D phone; other shapes go to the AI engines. Click another model or photo afterwards to use it instead.</span>
+      <div class="row"><input id="pf-q" placeholder="Product name, e.g. itel S25 Ultra" style="max-width:360px"><button class="btn primary" id="pf-go" type="button">Find &amp; Build 3D</button><button class="btn" id="pf-parts-go" type="button" title="Only search for the spare part photos">Find part photos</button><span class="muted" id="pf-status"></span></div>
       <details><summary class="muted" style="cursor:pointer">Sketchfab API token (needed once, for real 3D models)</summary>
         <div class="row" style="margin-top:8px"><input id="sf-key" type="password" autocomplete="off" placeholder="Sketchfab API token" value="${esc(sfToken)}" style="max-width:360px">
         <button class="btn" type="button" id="sf-key-save">Save</button></div>
@@ -159,6 +172,7 @@ export async function show3d(app, { db, toast, esc }) {
       </details>
       <div id="pf-out"></div>
       <span class="muted">Photos belong to whoever took them. Prefer the maker's official site (shown under each photo).</span>
+      <div id="pf-parts"></div>
       <div id="pf-shop"></div>
     </div>
     <div class="card list">
@@ -218,7 +232,7 @@ export async function show3d(app, { db, toast, esc }) {
       <div class="lbl"><span>${l}</span>${pmPhotos[k] ? `<button type="button" data-pm-clear="${k}">Remove</button>` : ''}</div></label>`).join('');
   };
   async function loadPmPhotos() {
-    $('pm-out').innerHTML = ''; $('pm-note').textContent = ''; $('pf-out').innerHTML = ''; $('pf-status').textContent = '';
+    $('pm-out').innerHTML = ''; $('pm-note').textContent = ''; $('pf-out').innerHTML = ''; $('pf-status').textContent = ''; $('pf-parts').innerHTML = '';
     $('pf-q').value = (products.find(x => x.id === pidSel.value) || {}).name || '';
     const ph = await db.doc('productPhotos/' + pidSel.value).get().then(d => d.exists ? d.data() : {}).catch(() => ({}));
     pmPhotos = {}; PM_SLOTS.forEach(([k]) => { if (typeof ph[k] === 'string') pmPhotos[k] = ph[k]; });
@@ -275,6 +289,7 @@ export async function show3d(app, { db, toast, esc }) {
       for (let i = 0; i < Math.min(3, pfModels.length) && !used; i++) {
         try { await useModel(i); used = true; } catch (err) { console.warn(err); say('m', 'Model ' + (i + 1) + ' could not be used (' + err.message + ')'); }
       }
+      if (serperKey) await runParts().catch(err => { $('pf-parts').innerHTML = `<p class="err">Spare parts: ${esc(err.message)}</p>`; });
       if (used) { st.textContent = 'Done: real 3D model saved. Click another model to use it instead, or a photo to put photos on the built-in phone.'; }
       else if (phone && pfViews.front.length && pfViews.back.length) { await pick('back', 0); await pick('front', 0); st.textContent = 'Building with the AI\'s best front and back…'; await build3dPhone(); await photos360(); st.textContent = 'Done. Click another photo to rebuild.'; }
       else if (phone) {
@@ -287,6 +302,40 @@ export async function show3d(app, { db, toast, esc }) {
       else st.textContent = serperKey ? 'No clean product photo found. Search again or upload one below.' : 'No 3D model found. Add a Serper key to use photos instead.';
     } catch (err) { st.textContent = ''; out.insertAdjacentHTML('beforeend', `<p class="err">${esc(err.message)}</p>`); }
     btn.disabled = false;
+  };
+  // Real spare-part photos: the AI's best photo for each part is saved; click a part to try its next photo.
+  let pfParts = {}, pfPartIdx = {}, pfPartPics = {};
+  const PART_NAMES = { battery: 'Battery', board: 'Main board', camera: 'Camera module', soc: 'Chip', cpu: 'Processor', fan: 'Cooling fan', ram: 'RAM', ssd: 'SSD', wifi: 'Wi-Fi card' };
+  async function runParts() {
+    const p = products.find(x => x.id === (pfPid || pidSel.value)), q = $('pf-q').value.trim() || p.name, box = $('pf-parts'), st = $('pf-status');
+    if (!serperKey) { $('pf').querySelectorAll('details')[1].open = true; toast('Add your Serper key first'); return; }
+    pfPid = p.id; box.innerHTML = '<p class="muted">Finding real spare part photos…</p>';
+    pfParts = await findParts(q, p.model || 'phone', p.labels || {}, serperKey, s => { st.textContent = s; });
+    pfPartIdx = {}; pfPartPics = {};
+    for (const k of Object.keys(pfParts)) { try { pfPartPics[k] = await partPhoto(pfParts[k][0]); pfPartIdx[k] = 0; } catch (e) {} }
+    if (!Object.keys(pfPartPics).length) { box.innerHTML = '<p class="muted">No clear spare part photos found for this product.</p>'; return; }
+    p.parts = await saveParts(db, p.id, pfPartPics);
+    drawParts(); toast('Spare part photos saved: ' + Object.keys(pfPartPics).map(k => PART_NAMES[k] || k).join(', '));
+  }
+  function drawParts() {
+    $('pf-parts').innerHTML = `<div><b>Real spare parts</b> <span class="muted">(shown on the parts in the exploded view; click one to try its next photo)</span>
+      <div class="photos" style="margin-top:6px">${Object.entries(pfPartPics).map(([k, v]) => `<div class="slot" data-part="${k}" title="Try the next photo">
+        <div class="img" style="background-image:url('${v.url}')"></div>
+        <div class="lbl"><span>${esc(PART_NAMES[k] || k)} <span class="muted">${(pfPartIdx[k] || 0) + 1}/${pfParts[k].length}</span></span></div></div>`).join('')}</div></div>`;
+  }
+  $('pf-parts').onclick = async e => {
+    const t = e.target.closest('[data-part]'); if (!t) return; const k = t.dataset.part, list = pfParts[k] || [];
+    if (list.length < 2) { toast('No other photo of this part'); return; }
+    for (let n = 1; n < list.length; n++) {
+      const i = ((pfPartIdx[k] || 0) + n) % list.length;
+      try { pfPartPics[k] = await partPhoto(list[i]); pfPartIdx[k] = i; break; } catch (err) {}
+    }
+    const p = products.find(x => x.id === pfPid); p.parts = await saveParts(db, p.id, pfPartPics); drawParts(); toast(PART_NAMES[k] + ' photo changed');
+  };
+  $('pf-parts-go').onclick = async () => {
+    const b = $('pf-parts-go'); b.disabled = true; pfPid = pidSel.value;
+    try { await runParts(); $('pf-status').textContent = 'Spare part photos done.'; } catch (err) { $('pf-parts').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+    b.disabled = false;
   };
   // The best found photos (cropped) for the 360° photos tab: front, back, and a side view as the right side.
   async function photoPics() {

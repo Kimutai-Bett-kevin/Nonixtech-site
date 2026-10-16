@@ -90,6 +90,19 @@ picks the front from four sides); in the shop the screen lid lifts back, the
 deck or top cover lifts up and the bottom drops, with the built-in parts
 inside.
 
+Real spare parts (`shop/findparts.js`): Find & Build 3D (or "Find part
+photos" on its own) searches Google Images through Serper for the product's
+battery, logic board / motherboard, camera module, chip, fan, RAM, SSD…,
+Gemini keeps only real photos of one loose part and marks it, and the best
+crop of each is saved in `productParts/{pid}` (JPEG data URLs, marker in
+`products/{pid}.parts`). In the shop that part becomes a slab shaped like
+the photo with the photo on it, and the part card shows it. Click a part in
+the admin to try its next photo.
+
+Fill with AI (product form): Gemini fills category, 3D shape, spec line,
+description, spec sheet, ad lines and the part labels (`labels`) from the
+product name. Specs must be checked before saving.
+
 Exploded view, tap a part (or its label): a card shows what the part does
 and the matching spec row, and the part moves out on its own, larger, with a
 glowing outline, turning, while the rest fades. Tap ✕, empty space or

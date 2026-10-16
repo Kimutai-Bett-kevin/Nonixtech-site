@@ -761,7 +761,7 @@ class Component extends DCLogic {
       kpis: [['Runs today', 3902], ['Success rate', '99.1%'], ['Docs processed', 18440], ['Avg latency', '1.8 s']],
       rows: [['Invoice extractor', '1,204 docs', 'Healthy'], ['Sales report agent', 'Daily 07:00', 'Done'], ['ERP sync · Sage', 'Every 15 min', 'Healthy'], ['Support triage bot', '86 chats', 'Running']] }
   ];
-  viewers = {}; adEls = new Map(); adStart = {}; adRefCache = {}; photoReq = {}; modelReq = {}; skinReq = {};
+  viewers = {}; adEls = new Map(); adStart = {}; adRefCache = {}; photoReq = {}; modelReq = {}; skinReq = {}; partsReq = {};
   chatScrollRef = React.createRef(); hardwareRef = React.createRef();
   state = {
     view: 'home', pid: 'ip16pro', mode: 'assembled', mediaTab: '3d', qty: 1, photoIdx: 0,
@@ -807,7 +807,7 @@ class Component extends DCLogic {
   }
   fromDoc(id, d) {
     return { id, name: d.name || 'Untitled', type: d.type || 'Product', model: d.model || 'phone', price: Number(d.price) || 0, accent: d.accent || '#6366F1',
-      specs: (d.specs || []).filter(Boolean), keySpec: d.keySpec || '', blurb: d.blurb || '', rows: (d.rows || []).map(r => [r.k, r.v]), labels: d.labels || {}, sort: Number(d.sort) || 0, model3d: d.model3d || null, skin: d.skin || null };
+      specs: (d.specs || []).filter(Boolean), keySpec: d.keySpec || '', blurb: d.blurb || '', rows: (d.rows || []).map(r => [r.k, r.v]), labels: d.labels || {}, sort: Number(d.sort) || 0, model3d: d.model3d || null, skin: d.skin || null, parts: d.parts || null };
   }
   async loadShop() {
     const db = await this.db(); if (!db) return;
@@ -852,8 +852,20 @@ class Component extends DCLogic {
       this.setState(s => ({ assets: { ...s.assets, [pid]: { ...(s.assets[pid] || {}), skin: { ver: k.ver, front: k.front, back: k.back, colour: k.colour, aspect: k.aspect } } } }));
     } catch (e) { console.warn('Could not load phone photos', e); this.skinReq[pid] = null; }
   }
+  // Real spare-part photos (battery, board, camera…) for the exploded view, saved from the admin's 3D models tab.
+  async loadParts(pid) {
+    const p = this.P.find(x => x.id === pid), m = p && p.parts;
+    if (!m || !m.ver || this.partsReq[pid] === m.ver) return; this.partsReq[pid] = m.ver;
+    try {
+      const db = await this.db(); if (!db) { this.partsReq[pid] = null; return; }
+      const d = await db.doc('productParts/' + pid).get(); if (!d.exists) return;
+      const k = d.data(), parts = {};
+      Object.entries(k).forEach(([key, v]) => { if (v && typeof v.url === 'string') parts[key] = { url: v.url, aspect: Number(v.aspect) || 1 }; });
+      this.setState(s => ({ assets: { ...s.assets, [pid]: { ...(s.assets[pid] || {}), parts: { ver: k.ver, ...parts } } } }));
+    } catch (e) { console.warn('Could not load part photos', e); this.partsReq[pid] = null; }
+  }
   async loadPhotos(pid) {
-    this.loadModel3d(pid); this.loadSkin(pid);
+    this.loadModel3d(pid); this.loadSkin(pid); this.loadParts(pid);
     if (!pid || this.photoReq[pid]) return; this.photoReq[pid] = true;
     const db = await this.db(); if (!db) return;
     try {
@@ -907,15 +919,15 @@ class Component extends DCLogic {
     if (hv) {
       hv.cycle = this.state.heroMode === 'auto'; if (!hv.cycle) hv.mode = this.state.heroMode;
       const p = this.heroProduct(), as = this.state.assets[p.id] || {}, a = as.model, sk = as.skin;
-      const key = p.id + (a ? ':' + a.name : '') + (sk ? ':skin' + sk.ver : '');
-      if (hv.key !== key) { hv.key = key; hv.kind = p.model; hv.labels = p.labels; hv.rows = p.rows || []; hv.gltf = a ? a.buf : null; hv.yaw = a ? a.yaw || 0 : 0; hv.skin = sk || null; hv.dirty = true; }
+      const key = p.id + (a ? ':' + a.name : '') + (sk ? ':skin' + sk.ver : '') + (as.parts ? ':parts' + as.parts.ver : '');
+      if (hv.key !== key) { hv.key = key; hv.kind = p.model; hv.labels = p.labels; hv.rows = p.rows || []; hv.gltf = a ? a.buf : null; hv.yaw = a ? a.yaw || 0 : 0; hv.skin = sk || null; hv.partTex = as.parts || null; hv.dirty = true; }
     }
     const pv = this.viewers.product;
     if (pv) {
       pv.mode = this.state.mode;
       const p = this.product(), as = this.state.assets[p.id] || {}, a = as.model, sk = as.skin;
-      const key = p.id + (a ? ':' + a.name : '') + (sk ? ':skin' + sk.ver : '');
-      if (pv.key !== key) { pv.key = key; pv.kind = p.model; pv.labels = p.labels; pv.rows = p.rows || []; pv.focus = null; pv.gltf = a ? a.buf : null; pv.yaw = a ? a.yaw || 0 : 0; pv.skin = sk || null; pv.dirty = true; }
+      const key = p.id + (a ? ':' + a.name : '') + (sk ? ':skin' + sk.ver : '') + (as.parts ? ':parts' + as.parts.ver : '');
+      if (pv.key !== key) { pv.key = key; pv.kind = p.model; pv.labels = p.labels; pv.rows = p.rows || []; pv.focus = null; pv.partTex = as.parts || null; pv.gltf = a ? a.buf : null; pv.yaw = a ? a.yaw || 0 : 0; pv.skin = sk || null; pv.dirty = true; }
     }
   }
   heroRef = el => {
@@ -929,7 +941,7 @@ class Component extends DCLogic {
   // The home 3D viewer shows every product in turn: one Assembled -> Exploded -> X-Ray round (10.5 s, same clock as
   // the viewer's Auto cycle) each. Tapping a dot shows that product and pauses the turns for 30 s.
   heroProduct() { return this.P[this.state.heroIdx % this.P.length] || this.P[0]; }
-  heroLoad(i) { [i, i + 1].forEach(j => { const p = this.P[j % this.P.length]; if (p) { this.loadModel3d(p.id); this.loadSkin(p.id); } }); }
+  heroLoad(i) { [i, i + 1].forEach(j => { const p = this.P[j % this.P.length]; if (p) { this.loadModel3d(p.id); this.loadSkin(p.id); this.loadParts(p.id); } }); }
   heroTick() {
     const n = this.P.length; if (!n || (this._heroHold || 0) > Date.now()) return;
     const i = Math.floor(performance.now() / 10500) % n;
@@ -987,7 +999,23 @@ class Component extends DCLogic {
         if (label) mkLabel(label, p);
         parts.push(p); return p;
       };
-      const add = (obj, pos, off, label, kind) => { obj.position.set(pos[0], pos[1], pos[2]); group.add(obj); return register(obj, new T.Vector3(off[0], off[1], off[2]), label, kind); };
+      // A real spare-part photo on a part: the part becomes a slab shaped like the photo, with the photo on both big faces.
+      const realPart = (obj, ph) => {
+        const sz = new T.Box3().setFromObject(obj).getSize(new T.Vector3()), d = [sz.x, sz.y, sz.z], thin = d.indexOf(Math.min(...d));
+        const [a, b] = [0, 1, 2].filter(i => i !== thin), long = Math.max(d[a], d[b]), photoLong = Math.max(ph.aspect, 1 / ph.aspect);
+        // In-plane sides: keep the long side, the short side follows the photo's proportions.
+        const la = d[a] >= d[b] ? a : b, sa = la === a ? b : a; d[la] = long; d[sa] = long / photoLong;
+        const t = new T.TextureLoader().load(ph.url); if (T.sRGBEncoding) t.encoding = T.sRGBEncoding;
+        // Box faces: u runs along x; v along y (z faces) or z (y faces). Turn the photo when its long side is across.
+        const uAxis = 0, photoWide = ph.aspect < 1; if ((la === uAxis) !== photoWide) { t.center.set(0.5, 0.5); t.rotation = Math.PI / 2; }
+        const face = new T.MeshBasicMaterial({ map: t, transparent: true }), side = Array.isArray(obj.material) ? obj.material[0] : (obj.material || mk(0x334155));
+        const mats = [0, 1, 2, 3, 4, 5].map(i => Math.floor(i / 2) === thin ? face : side);
+        const m = new T.Mesh(new T.BoxGeometry(d[0], d[1], d[2]), mats); m.userData.realPhoto = ph.url; return m;
+      };
+      const add = (obj, pos, off, label, kind) => {
+        const ph = label && label.k && api.partTex && api.partTex[label.k];
+        if (ph && (!kind || kind === 'inner')) { const side = obj.isMesh ? obj.material : null; obj = realPart(obj, ph); if (side && !Array.isArray(side)) obj.material = obj.material.map(m => m.map ? m : side); }
+        obj.position.set(pos[0], pos[1], pos[2]); group.add(obj); return register(obj, new T.Vector3(off[0], off[1], off[2]), label, kind); };
       const L = (k, d) => ({ k, t: (api.labels && api.labels[k]) || d });
       const frameCam = (t, c) => { tgtHome = new T.Vector3(...t); camHome = new T.Vector3(...c); api.reset(); };
       // Exploded view: tap a part (or its label) to see what it does and the matching spec, with the part on its own
@@ -1025,6 +1053,7 @@ class Component extends DCLogic {
         card.innerHTML = `<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><div style="font:500 10px 'JetBrains Mono',monospace;letter-spacing:.1em;color:#06B6D4">${esc(info[0].toUpperCase())}</div>
           <div style="font-size:16px;font-weight:600;color:#fff;margin-top:2px">${esc(p.name || info[0])}</div></div>
           <button type="button" aria-label="Close" style="border:none;background:rgba(148,163,184,.15);color:#E5E7EB;width:28px;height:28px;border-radius:8px;cursor:pointer;flex:none">✕</button></div>
+          ${p.obj.userData.realPhoto ? `<img src="${p.obj.userData.realPhoto}" alt="" style="display:block;margin-top:10px;width:100%;max-height:140px;object-fit:contain;border-radius:8px;background:#fff">` : ''}
           ${row ? `<div style="margin-top:8px;padding:6px 10px;border-radius:8px;background:rgba(99,102,241,.14);font-size:12px"><span style="color:#94A3B8">${esc(row[0])}:</span> ${esc(row[1])}</div>` : ''}
           ${info[1] ? `<p style="margin:8px 0 0;color:#CBD5E1">${esc(info[1])}</p>` : ''}
           <div style="margin-top:8px;font-size:11px;color:#94A3B8">${p.spinOk ? 'Shown on its own in 3D. ' : ''}Tap another part, or ✕ to put it back.</div>`;
