@@ -62,6 +62,11 @@ select option{background:#0F172A;color:#E5E7EB;}
           <div style="position:relative;height:clamp(380px,56vh,560px);border-radius:24px;overflow:hidden;border:1px solid rgba(99,102,241,.3);background:radial-gradient(circle at 50% 40%,rgba(99,102,241,.18),rgba(11,15,25,.2) 60%);box-shadow:0 0 60px -20px rgba(99,102,241,.5);">
             <div ref="{{ heroRef }}" style="position:absolute;inset:0;"></div>
             <div style="position:absolute;top:16px;left:18px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#A5F3FC;letter-spacing:.08em;pointer-events:none;">{{ heroName }} · DRAG TO ROTATE</div>
+            <div style="position:absolute;top:14px;right:16px;display:flex;gap:6px;align-items:center;">
+              <sc-for list="{{ heroDots }}" as="d" hint-placeholder-count="4">
+                <button onClick="{{ d.pick }}" title="{{ d.label }}" aria-label="{{ d.label }}" style="width:{{ d.w }};height:8px;border:none;border-radius:99px;padding:0;cursor:pointer;background:{{ d.bg }};transition:width .3s;"></button>
+              </sc-for>
+            </div>
             <div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(11,15,25,.75);border:1px solid rgba(148,163,184,.18);backdrop-filter:blur(10px);">
               <sc-for list="{{ heroModes }}" as="m" hint-placeholder-count="4">
                 <button onClick="{{ m.pick }}" style="height:32px;border:none;border-radius:8px;padding:0 12px;font-size:12px;font-weight:600;cursor:pointer;background:{{ m.bg }};color:{{ m.fg }};white-space:nowrap;">{{ m.label }}</button>
@@ -77,6 +82,11 @@ select option{background:#0F172A;color:#E5E7EB;}
           <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(11,15,25,.85) 0%,rgba(11,15,25,0) 34%,rgba(11,15,25,0) 70%,rgba(11,15,25,.9) 100%);"></div>
           <div style="position:absolute;top:48px;left:0;right:0;text-align:center;padding:0 24px;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:14px;">
             <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;color:#A5F3FC;">{{ heroName }} · LIVE 3D</span>
+            <div style="display:flex;gap:6px;align-items:center;pointer-events:auto;">
+              <sc-for list="{{ heroDots }}" as="d" hint-placeholder-count="4">
+                <button onClick="{{ d.pick }}" title="{{ d.label }}" aria-label="{{ d.label }}" style="width:{{ d.w }};height:8px;border:none;border-radius:99px;padding:0;cursor:pointer;background:{{ d.bg }};transition:width .3s;"></button>
+              </sc-for>
+            </div>
             <h1 style="margin:0;font-size:clamp(36px,5vw,64px);line-height:1.04;letter-spacing:-.035em;font-weight:700;color:#fff;text-wrap:balance;max-width:900px;">See inside before you buy.</h1>
           </div>
           <div style="position:absolute;left:0;right:0;bottom:28px;display:flex;flex-direction:column;align-items:center;gap:16px;padding:0 24px;">
@@ -755,7 +765,7 @@ class Component extends DCLogic {
   chatScrollRef = React.createRef(); hardwareRef = React.createRef();
   state = {
     view: 'home', pid: 'ip16pro', mode: 'assembled', mediaTab: '3d', qty: 1, photoIdx: 0,
-    heroMode: 'auto', cart: [], rfpSel: [], toast: '', catalogV: 0, hl: '', cmp: [], chatCompact: false,
+    heroMode: 'auto', heroIdx: 0, cart: [], rfpSel: [], toast: '', catalogV: 0, hl: '', cmp: [], chatCompact: false,
     shop: { mpesaType: 'till', mpesaNumber: '', mpesaName: 'NonixTech', phone: '+254 724 171 555', whatsapp: '254724171555' },
     swId: 'pos', demoMod: 0, live: 0,
     co: { name: '', phone: '', address: '', code: '' }, coError: '', saving: false, placed: null,
@@ -805,7 +815,7 @@ class Component extends DCLogic {
       const [ps, st] = await Promise.all([db.collection('products').where('active', '==', true).get(), db.doc('settings/shop').get()]);
       const list = ps.docs.map(d => this.fromDoc(d.id, d.data())).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
       if (list.length) this.P = list;
-      const hv = this.viewers.hero; if (hv) { hv.kind = this.P[0].model; hv.labels = this.P[0].labels; hv.dirty = true; }
+      const hv = this.viewers.hero; if (hv) hv.key = null; // show the loaded catalogue in the home 3D viewer
       this.setState(s => ({ catalogV: s.catalogV + 1, shop: st.exists ? { ...s.shop, ...st.data() } : s.shop,
         cart: s.cart.filter(c => this.P.some(p => p.id === c.id)), pid: this.P.some(p => p.id === s.pid) ? s.pid : this.P[0].id }));
       const want = new URLSearchParams(location.search).get('product');
@@ -894,7 +904,12 @@ class Component extends DCLogic {
 
   syncViewers() {
     const hv = this.viewers.hero;
-    if (hv) { hv.cycle = this.state.heroMode === 'auto'; if (!hv.cycle) hv.mode = this.state.heroMode; }
+    if (hv) {
+      hv.cycle = this.state.heroMode === 'auto'; if (!hv.cycle) hv.mode = this.state.heroMode;
+      const p = this.heroProduct(), as = this.state.assets[p.id] || {}, a = as.model, sk = as.skin;
+      const key = p.id + (a ? ':' + a.name : '') + (sk ? ':skin' + sk.ver : '');
+      if (hv.key !== key) { hv.key = key; hv.kind = p.model; hv.labels = p.labels; hv.rows = p.rows || []; hv.gltf = a ? a.buf : null; hv.yaw = a ? a.yaw || 0 : 0; hv.skin = sk || null; hv.dirty = true; }
+    }
     const pv = this.viewers.product;
     if (pv) {
       pv.mode = this.state.mode;
@@ -904,8 +919,22 @@ class Component extends DCLogic {
     }
   }
   heroRef = el => {
-    if (el) { const v = this.makeViewer(el, { auto: true, interactive: false }); const p = this.P[0]; v.kind = p.model; v.labels = p.labels; v.dirty = true; this.viewers.hero = v; this.syncViewers(); }
-    else if (this.viewers.hero) { this.viewers.hero.dispose(); this.viewers.hero = null; }
+    if (el) {
+      if (this.viewers.hero) return;
+      this.viewers.hero = this.makeViewer(el, { auto: true, interactive: false }); this.syncViewers();
+      clearInterval(this._heroTimer); this._heroTimer = setInterval(() => this.heroTick(), 500); this.heroTick();
+    }
+    else if (this.viewers.hero) { this.viewers.hero.dispose(); this.viewers.hero = null; clearInterval(this._heroTimer); }
+  };
+  // The home 3D viewer shows every product in turn: one Assembled -> Exploded -> X-Ray round (10.5 s, same clock as
+  // the viewer's Auto cycle) each. Tapping a dot shows that product and pauses the turns for 30 s.
+  heroProduct() { return this.P[this.state.heroIdx % this.P.length] || this.P[0]; }
+  heroLoad(i) { [i, i + 1].forEach(j => { const p = this.P[j % this.P.length]; if (p) { this.loadModel3d(p.id); this.loadSkin(p.id); } }); }
+  heroTick() {
+    const n = this.P.length; if (!n || (this._heroHold || 0) > Date.now()) return;
+    const i = Math.floor(performance.now() / 10500) % n;
+    this.heroLoad(i);
+    if (i !== this.state.heroIdx) this.setState({ heroIdx: i });
   };
   productRef = el => {
     if (el) { this.viewers.product = this.makeViewer(el, { auto: false, interactive: true }); this.syncViewers(); }
@@ -1591,8 +1620,10 @@ ${systems}`;
       cartCount: s.cart.reduce((a, c) => a + c.qty, 0), rfpCount: s.rfpSel.length,
       isHome: s.view === 'home', isProduct: s.view === 'product', isCompare: s.view === 'compare', ...this.compareData(), isEnterprise: s.view === 'enterprise', isCart: s.view === 'cart', isCheckout: s.view === 'checkout', isRfp: s.view === 'rfp', isStudio: s.view === 'studio',
       layoutSplit: layout === 'split', layoutStage: layout === 'stage', layoutCatalog: layout === 'catalog',
-      heroRef: this.heroRef, heroName: P[0].name.toUpperCase(), heroCta: 'View ' + P[0].name,
-      openHeroProduct: () => this.go('product', { pid: P[0].id, mode: 'assembled', mediaTab: '3d', qty: 1 }),
+      heroRef: this.heroRef, heroName: this.heroProduct().name.toUpperCase(), heroCta: 'View ' + this.heroProduct().name,
+      heroDots: P.map((x, i) => ({ label: x.name, bg: x.id === this.heroProduct().id ? '#06B6D4' : 'rgba(148,163,184,.35)', w: x.id === this.heroProduct().id ? '22px' : '8px',
+        pick: () => { this._heroHold = Date.now() + 30000; this.heroLoad(i); this.setState({ heroIdx: i }); } })),
+      openHeroProduct: () => this.go('product', { pid: this.heroProduct().id, mode: 'assembled', mediaTab: '3d', qty: 1 }),
       heroModes: [['auto', 'Auto'], ['assembled', 'Assembled'], ['exploded', 'Exploded'], ['xray', 'X-Ray']].map(([v, l]) => ({ label: l, ...on(s.heroMode === v), pick: () => this.setState({ heroMode: v }) })),
       scrollHardware: () => { const el = this.hardwareRef.current; if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' }); },
       hardwareRef: this.hardwareRef,
